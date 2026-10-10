@@ -7,7 +7,7 @@ window.PLATFORM = {
   vision: 'رؤية عُمان 2040',
   teacher: 'أ. نسرين الفارسي',
   // رابط تطبيق Google Apps Script (Web app) الذي يستقبل النتائج — اتركيه فارغًا لإيقاف الإرسال
-  sheetUrl: 'https://script.google.com/macros/s/AKfycbxJcjwN7qLpr4_ecOmqt-URtyHce3shg9NAFQtPoj_dZLkRd-oWWPfJY-cATWMIzqw/exec',
+  sheetUrl: 'https://script.google.com/macros/s/AKfycbzA8YNySzplttFqMWNabjFaJDxkDQOtSWXubIMLeQCmk5JSs-Okv6jzFNiuJdh_j6Il/exec',
   // الشعب المقترحة في خانة «الصف / الشعبة» (اختياري)
   classes: ['12/1','12/2','12/3','12/4','12/5','12/6'],
   lessons: [
