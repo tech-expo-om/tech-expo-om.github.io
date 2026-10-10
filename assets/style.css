@@ -296,11 +296,11 @@ details.tbl th{color:var(--muted);font-weight:700}
 .ribbon::before,.ribbon::after{content:"";position:absolute;top:22%;width:clamp(18px,3.5cqw,34px);height:100%;background:#115e59;z-index:-1}
 .ribbon::before{right:calc(-1 * clamp(14px,2.6cqw,26px));clip-path:polygon(0 0,100% 0,70% 50%,100% 100%,0 100%)}
 .ribbon::after{left:calc(-1 * clamp(14px,2.6cqw,26px));clip-path:polygon(0 0,100% 0,100% 100%,0 100%,30% 50%)}
-.ribbon span{font-family:'Aref Ruqaa','Cairo',serif;font-weight:700;font-size:clamp(20px,4.4cqw,44px);line-height:1.3;
+.ribbon span{display:inline-block;padding:.32em .12em .12em;margin:-.22em 0 -.08em;font-family:'Aref Ruqaa','Cairo',serif;font-weight:700;font-size:clamp(20px,4.4cqw,44px);line-height:1.3;
   background:linear-gradient(180deg,#fff7c2,#facc15 45%,#d4a017 55%,#fff3b0);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
 .cSub{font-weight:800;color:#b45309;font-size:clamp(11px,1.6cqw,16px)}
 .cTxt{font-size:clamp(11px,1.55cqw,16px);color:#374151;max-width:72cqw}
-.cName{font-family:'Aref Ruqaa','Cairo',serif;font-weight:700;font-size:clamp(28px,6.2cqw,62px);line-height:1.35;padding:0 4cqw;
+.cName{font-family:'Aref Ruqaa','Cairo',serif;font-weight:700;font-size:clamp(28px,6.2cqw,62px);line-height:1.35;padding:.3em 4cqw .1em;margin-top:-.2em;
   background:linear-gradient(180deg,#0f766e,#0d9488 40%,#b7791f 60%,#e8b923);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 2px 0 #fff) drop-shadow(0 4px 0 rgba(183,121,31,.55)) drop-shadow(0 10px 12px rgba(0,0,0,.22))}
 .cStats{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(6px,1.4cqw,14px);margin:clamp(2px,.8cqw,8px) 0 clamp(6px,1.2cqw,12px)}
