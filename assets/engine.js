@@ -19,7 +19,8 @@ const PKEY = 'tech-expo:profile';
 const lkey = id => 'tech-expo:lesson:' + id;
 const read = (k, d) => { try{ return Object.assign(d, JSON.parse(localStorage.getItem(k)) || {}); }catch(e){ return d; } };
 const write = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
-let PR = read(PKEY, {name:'', sound:true});
+let PR = read(PKEY, {name:'', cls:'', sound:true, device:''});
+if(!PR.device){ PR.device = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); write(PKEY, PR); }
 const saveProfile = () => write(PKEY, PR);
 const freshLesson = () => ({warm:false, done:{}, notes:{}, reflect:'', hist:[], sum:null});
 let S = L ? read(lkey(L.id), freshLesson()) : null;
@@ -48,7 +49,39 @@ function save(){
   S.sum = {done, total:ACTS.length, best:pct(total(),MAX), attempts:S.hist.length};
   write(lkey(L.id), S);
 }
-function record(id, s, m, e){ S.hist.push({a:id, t:Date.now(), s, m, e}); save(); }
+function record(id, s, m, e){
+  const t = Date.now(); S.hist.push({a:id, t, s, m, e}); save();
+  const act = ACTS.find(x=>x.id===id), plain = h => { const d=document.createElement('div'); d.innerHTML=h; return d.textContent.trim(); };
+  queueSend({ts:t, name:PR.name, cls:PR.cls, device:PR.device, lesson:L.id, lessonTitle:L.title, act:id, actTitle:act.title,
+    attempt:attemptsOf(id).length, score:s, max:m, pct:pct(s,m), mistakes:e, acts:ACTS.length, misses:runLog.map(x=>plain(x.q)).slice(0,30)});
+}
+/* ---------- إرسال النتائج إلى جدول المعلمة (Google Sheets) ---------- */
+const OUTBOX = 'tech-expo:outbox';
+let sendState = 'off'; // off | sending | sent | queued
+function queueSend(row){
+  if(!P.sheetUrl) return;
+  const q = read(OUTBOX, {items:[]}); q.items.push(row); write(OUTBOX, q); flush();
+}
+let flushing = null, flushAgain = false;
+function flush(){ // إرسال واحد في كل مرة لمنع تكرار الصفوف
+  if(!P.sheetUrl) return Promise.resolve();
+  if(flushing){ flushAgain = true; return flushing; }
+  const q = read(OUTBOX, {items:[]});
+  if(!q.items.length) return Promise.resolve();
+  sendState = 'sending';
+  return flushing = Promise.all(q.items.map(row => fetch(P.sheetUrl, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(row)})
+    .then(()=>row.ts+'|'+row.act, ()=>null)))
+  .then(okIds => {
+    const done = new Set(okIds.filter(Boolean)), cur = read(OUTBOX, {items:[]});
+    cur.items = cur.items.filter(r => !done.has(r.ts+'|'+r.act)); write(OUTBOX, cur);
+    sendState = cur.items.length ? 'queued' : 'sent'; syncNote();
+  }).finally(() => { flushing = null; if(flushAgain){ flushAgain = false; flush(); } });
+}
+function syncNote(){
+  const el = $('#syncNote'); if(!el || !P.sheetUrl) return;
+  el.innerHTML = sendState==='sent' ? '☁️ وصلت نتيجتكِ إلى معلمتكِ ✅' : sendState==='queued' ? '📴 لا يوجد اتصال — ستُرسل نتيجتكِ إلى معلمتكِ تلقائيًا عند عودة الإنترنت' : '☁️ جارٍ إرسال نتيجتكِ إلى معلمتكِ…';
+}
+addEventListener('online', flush);
 function addPts(n){ runPts += n; refreshHeader(); }
 function logMiss(q, your, correct, why){ runLog.push({q, your, correct, why:why||''}); }
 
@@ -99,7 +132,7 @@ function shell(){
     </a>${lessonBar}
     <button class="iconbtn" id="sndBtn" aria-label="تشغيل/إيقاف الصوت">🔊</button></div>`;
   $('#sndBtn').onclick = () => { PR.sound=!PR.sound; saveProfile(); refreshHeader(); tone('tap'); };
-  $('#ftr').innerHTML = `${L?`${esc(L.subject)} • ${esc(L.grade)} • ${esc(L.unit)} — ${esc(L.subtitle)}<br>`:''}${esc(P.school)} • إعداد: <b>${esc(P.teacher)}</b>`;
+  $('#ftr').innerHTML = `${L?`${esc(L.subject)} • ${esc(L.grade)} • ${esc(L.unit)} — ${esc(L.subtitle)}<br>`:''}${esc(P.school)} • إعداد: <b>${esc(P.teacher)}</b> • <a href="${L?'../':''}teacher/" class="tlink">بوابة المعلمة</a>`;
   $('#guideBtn').innerHTML = `${ROBOT}<span>كيف أستخدم الصفحة؟</span>`;
   $('#guideBtn').onclick = startTour;
   refreshHeader();
@@ -143,8 +176,7 @@ function library(){
         <span class="kicker">🎓 ${esc(P.tagline)}</span>
         <h1><span class="grad">${esc(P.name)}</span></h1>
         <p class="desc">معارض تفاعلية لكل درس: تمهيد مشوّق، ومعلومات مختصرة، وألعاب، وتقويم، وشهادة رقمية — مع سجلّ يحفظ كل محاولاتكِ لتري تطوّركِ.</p>
-        <div class="field"><label for="nm">اسمكِ (يُحفظ لكل الدروس والشهادات):</label>
-          <input id="nm" maxlength="60" placeholder="مثال: مريم بنت سالم الحارثية" value="${esc(PR.name)}" autocomplete="name"></div>
+        ${idFields('اسمكِ (يُحفظ لكل الدروس والشهادات):')}
       </div>
       ${orbit([['💻','#22d3ee'],['🤖','#a78bfa'],['☁️','#14b8a6'],['📡','#ec4899'],['🔐','#10b981'],['📊','#f59e0b']], '🎓')}
     </div>
@@ -152,6 +184,14 @@ function library(){
     <div class="lessons">${cards}</div>
   </section>`, '#14b8a6', 'library');
   $('#nm').oninput = e => { PR.name = e.target.value.trim(); saveProfile(); };
+  $('#cls').oninput = e => { PR.cls = e.target.value.trim(); saveProfile(); };
+}
+function idFields(label){
+  return `<div class="idRow"><div class="field"><label for="nm">${label}</label>
+      <input id="nm" maxlength="60" placeholder="مثال: مريم بنت سالم الحارثية" value="${esc(PR.name)}" autocomplete="name"></div>
+    <div class="field"><label for="cls">الصف / الشعبة:</label>
+      <input id="cls" maxlength="12" list="clsList" placeholder="مثال: 12/3" value="${esc(PR.cls)}"><datalist id="clsList">${(P.classes||[]).map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div></div>
+    ${P.sheetUrl?'<p class="privacy">🔒 تُرسل نتائج الأنشطة (الاسم، والصف، والدرجات) إلى معلمتكِ فقط لمتابعة تقدّمكِ.</p>':''}`;
 }
 
 /* =========================================================
@@ -167,20 +207,21 @@ function welcome(){
         <p class="subt">${esc(L.subtitle)}</p>
         <p class="desc">${esc(L.welcome)}</p>
         <div class="tags"><span>⏳ تمهيد</span><span>📖 معلومات</span><span>🎮 ألعاب</span><span>💬 نقاش</span><span>🏆 تقويم وشهادة</span><span>📈 سجلّ المحاولات</span></div>
-        <div class="field"><label for="nm">اكتبي اسمكِ كما سيظهر في الشهادة:</label>
-          <input id="nm" maxlength="60" placeholder="مثال: مريم بنت سالم الحارثية" value="${esc(PR.name)}" autocomplete="name"></div>
+        ${idFields('اكتبي اسمكِ كما سيظهر في الشهادة:')}
         <div class="row"><button class="btn" id="startBtn">${S.warm?'تابعي الجولة ↩':'ادخلي المعرض ✨'}</button>
           <a class="btn ghost" href="../">📚 كل الدروس</a></div>
       </div>
       ${orbit(L.pavilions.map(p=>[p.icon,p.color]), L.icon)}
     </div></section>`, L.color, 'welcome');
   $('#startBtn').onclick = start;
-  $('#nm').addEventListener('keydown', e => { if(e.key==='Enter') start(); });
+  ['#nm','#cls'].forEach(s => $(s).addEventListener('keydown', e => { if(e.key==='Enter') start(); }));
 }
 function start(){
-  const v = $('#nm').value.trim();
-  if(v.length < 3){ $('#nm').classList.add('shake'); setTimeout(()=>$('#nm').classList.remove('shake'),400); toast('اكتبي اسمكِ أولًا لنبدأ الجولة 🌸'); $('#nm').focus(); return; }
-  PR.name = v; saveProfile(); tone('tap');
+  const v = $('#nm').value.trim(), c = $('#cls').value.trim();
+  const bad = (sel, m) => { $(sel).classList.add('shake'); setTimeout(()=>$(sel).classList.remove('shake'),400); toast(m); $(sel).focus(); };
+  if(v.length < 3) return bad('#nm', 'اكتبي اسمكِ أولًا لنبدأ الجولة 🌸');
+  if(!c) return bad('#cls', 'اكتبي الصف والشعبة (مثال: 12/3)');
+  PR.name = v; PR.cls = c; saveProfile(); tone('tap');
   S.warm ? goHub() : warmup();
 }
 
@@ -235,7 +276,7 @@ function goHub(){
   render(`<section class="panel">
     <div class="hubHead">
       <div><span class="kicker">🗺️ خريطة المعرض</span>
-        <h2 style="font-size:clamp(20px,4vw,30px);margin-top:6px">أهلًا بكِ يا ${esc(PR.name)} 🌸</h2>
+        <h2 style="font-size:clamp(20px,4vw,30px);margin-top:6px">أهلًا بكِ يا ${esc(PR.name)} 🌸 <span class="chip" style="font-size:13px">${esc(PR.cls)}</span></h2>
         <p class="muted">زوري الأجنحة بالترتيب الذي تحبّينه، ثم توجّهي إلى ${esc(F.title)}.</p></div>
       <div class="row"><span class="chip" style="font-size:15px">🏅 ${n} / ${L.pavilions.length}</span><button class="btn ghost sm" id="histBtn">📈 سجلّي</button></div>
     </div>
@@ -316,7 +357,7 @@ function finishPav(){
     <h2 style="font-size:clamp(22px,4vw,32px)">أحسنتِ! أكملتِ «${p.title}» 🏅</h2>
     <div class="stars">${starsOf(pc)}</div>
     <div class="scoreRow"><div>نتيجتكِ: <b>${runPts}</b> / ${max}</div><div>النسبة: <b>${fp(pc)}</b></div><div>الأخطاء: <b>${runLog.length}</b></div></div>
-    ${attemptNote(p.id,max)}
+    ${attemptNote(p.id,max)}<p class="syncNote" id="syncNote"></p>
     <p class="lead">${runLog.length?'راجعي دليل الأخطاء بالأسفل، ثم حاولي مرة أخرى لتحسين نتيجتكِ 💪':left?`بقي ${left===1?'جناح واحد':left===2?'جناحان':left+' أجنحة'} قبل ${esc(L.final.title)}.`:`أكملتِ كل الأجنحة… ${esc(L.final.title)} بانتظاركِ! 🏆`}</p>
     ${reviewHTML(runLog)}
     <div class="spacer"></div>
@@ -324,7 +365,7 @@ function finishPav(){
       <button class="btn ${runLog.length?'ghost':'gold'}" id="mapBtn">العودة إلى الخريطة 🗺️</button>
       <button class="btn ghost" id="learnBtn">مراجعة المعلومات 📖</button><button class="btn ghost" id="histBtn">📈 سجلّي</button></div>
   </section>`, p.color, 'result');
-  bindMap(); $('#retryBtn').onclick=()=>{ tone('tap'); startGames(); }; $('#learnBtn').onclick=()=>openPav(p.id); $('#histBtn').onclick=history;
+  bindMap(); syncNote(); $('#retryBtn').onclick=()=>{ tone('tap'); startGames(); }; $('#learnBtn').onclick=()=>openPav(p.id); $('#histBtn').onclick=history;
 }
 
 /* =========================================================
@@ -497,14 +538,14 @@ function finalResult(tfC, mcC){
     <h2 style="font-size:clamp(22px,4vw,32px)">نتيجتكِ في التقويم الختامي</h2>
     <div class="stars">${starsOf(pc)}</div>
     <div class="scoreRow"><div>تدريب 1: <b>${tfC}</b> / ${F.tf.length}</div><div>تدريب 2: <b>${mcC}</b> / ${F.mcq.length}</div><div>تدريب 3: <b>✔</b></div><div>النسبة: <b>${fp(pc)}</b></div></div>
-    ${attemptNote('final',max)}
+    ${attemptNote('final',max)}<p class="syncNote" id="syncNote"></p>
     <p class="lead">${runLog.length?`راجعي أخطاءكِ جيدًا يا ${esc(PR.name)}، ثم أعيدي التقويم لتحسين نتيجتكِ وشهادتكِ 💪`:'نتيجة كاملة! 🌟'}</p>
     ${reviewHTML(runLog)}
     <div class="spacer"></div>
     <div class="row c"><button class="btn gold" id="certBtn">استلمي شهادتكِ 📜</button><button class="btn ${runLog.length?'':'ghost'}" id="retryBtn">أعيدي التقويم ↺</button>
       <button class="btn ghost" id="histBtn">📈 سجلّي</button><button class="btn ghost" id="mapBtn">🗺️ الخريطة</button></div>
   </section>`, F.color, 'result');
-  bindMap(); $('#certBtn').onclick=showCert; $('#retryBtn').onclick=openFinal; $('#histBtn').onclick=history;
+  bindMap(); syncNote(); $('#certBtn').onclick=showCert; $('#retryBtn').onclick=openFinal; $('#histBtn').onclick=history;
 }
 
 /* =========================================================
@@ -713,6 +754,7 @@ function stopTour(){
 
 /* ---------- البداية ---------- */
 shell();
+flush();
 if(!L) library();
 else (PR.name && S.warm) ? goHub() : welcome();
 window.TechExpo = {state:()=>S, profile:()=>PR, goHub, openPav, openFinal, showCert, history, startTour, stopTour, total, MAX, LESSON:L};
