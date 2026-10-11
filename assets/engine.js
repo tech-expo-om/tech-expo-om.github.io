@@ -174,7 +174,7 @@ function library(){
     <div class="hero">
       <div>
         <span class="kicker">🎓 ${esc(P.tagline)}</span>
-        <h1><span class="grad">${esc(P.name)}</span></h1>
+        <h1><span class="grad">${esc(P.title)}</span></h1>
         <p class="desc">معارض تفاعلية لكل درس: تمهيد مشوّق، ومعلومات مختصرة، وألعاب، وتقويم، وشهادة رقمية — مع سجلّ يحفظ كل محاولاتكِ لتري تطوّركِ.</p>
         ${idFields('اسمكِ (يُحفظ لكل الدروس والشهادات):')}
       </div>
