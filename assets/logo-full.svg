@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="شعار مبدعة التقنية">
+  <!-- مبدعة التقنية: شعار مدرسة أمامة (الشمس، الكتاب، أوراق الفيروز) مع ومضة تقنيات التعلّم ممزوجًا بالذكاء الاصطناعي والأمن السيبراني والتجارة الإلكترونية -->
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee"/><stop offset=".55" stop-color="#8b5cf6"/><stop offset="1" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="#facc15"/><stop offset="1" stop-color="#d4a514"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0d9488"/><stop offset="1" stop-color="#2dd4bf"/>
+    </linearGradient>
+    <radialGradient id="core">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#a5f3fc"/><stop offset="1" stop-color="#22d3ee"/>
+    </radialGradient>
+    <radialGradient id="halo">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".55"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="flashHalo">
+      <stop offset="0" stop-color="#fff7d6" stop-opacity=".7"/><stop offset=".5" stop-color="#fb923c" stop-opacity=".25"/><stop offset="1" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="flashOuter">
+      <stop offset="0" stop-color="#fffbeb"/><stop offset=".35" stop-color="#fbbf24"/><stop offset=".75" stop-color="#f97316" stop-opacity=".7"/><stop offset="1" stop-color="#ec4899" stop-opacity=".15"/>
+    </radialGradient>
+    <radialGradient id="flashInner">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#fef9c3"/><stop offset="1" stop-color="#fde68a"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- مدار المستقبل -->
+  <circle cx="256" cy="256" r="215" fill="none" stroke="url(#ring)" stroke-width="5" stroke-dasharray="70 10 4 10" opacity=".9"/>
+  <circle cx="256" cy="256" r="199" fill="none" stroke="url(#ring)" stroke-width="1.5" opacity=".45"/>
+
+  <!-- شبكة عصبية (ذكاء اصطناعي) تربط عناصر الشعار -->
+  <g stroke="#67e8f9" stroke-width="2" opacity=".75" fill="none">
+    <path d="M78 196 L130 236 L176 271"/>
+    <path d="M434 196 L382 236 L336 271"/>
+  </g>
+
+  <!-- شمس المدرسة: أشعة على هيئة مسارات دوائر إلكترونية -->
+  <g stroke="#facc15" stroke-width="9" stroke-linecap="round" fill="#facc15">
+    <path d="M256 118 V82" /><circle cx="256" cy="74" r="7" stroke="none"/>
+    <path d="M222 126 L206 96" /><circle cx="202" cy="89" r="6" stroke="none"/>
+    <path d="M290 126 L306 96" /><circle cx="310" cy="89" r="6" stroke="none"/>
+    <path d="M196 146 L170 128 L160 128" /><circle cx="152" cy="128" r="6" stroke="none"/>
+    <path d="M316 146 L342 128 L352 128" /><circle cx="360" cy="128" r="6" stroke="none"/>
+    <path d="M186 176 H158" /><circle cx="150" cy="176" r="6" stroke="none"/>
+    <path d="M326 176 H354" /><circle cx="362" cy="176" r="6" stroke="none"/>
+  </g>
+  <path d="M208 178 A48 48 0 0 1 304 178" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- نواة الفكرة المتوهجة في قلب الشمس -->
+  <circle cx="256" cy="172" r="34" fill="url(#halo)"/>
+  <circle cx="256" cy="172" r="17" fill="url(#core)" filter="url(#glow)"/>
+
+  <!-- أوراق الفيروز من شعار المدرسة -->
+  <g fill="none" stroke="url(#teal)" stroke-width="13" stroke-linecap="round">
+    <path d="M232 400 C182 388 128 366 118 312 C114 288 124 264 130 240"/>
+    <path d="M280 400 C330 388 384 366 394 312 C398 288 388 264 382 240"/>
+  </g>
+  <g fill="#5eead4"><circle cx="130" cy="236" r="7"/><circle cx="382" cy="236" r="7"/></g>
+
+  <!-- ومضة الإبداع: انفجار ضوئي تخرج منه رموز تقنيات التعلّم -->
+  <circle cx="256" cy="296" r="96" fill="url(#flashHalo)"/>
+  <path d="M256.0 174.0 L263.8 267.0 L302.0 216.3 L277.2 274.8 L349.5 242.0 L285.0 288.2 L342.0 296.0 L285.0 303.8 L361.7 357.0 L277.2 317.2 L302.0 375.7 L263.8 325.0 L256.0 404.0 L248.2 325.0 L213.0 370.5 L234.8 317.2 L150.3 357.0 L227.0 303.8 L164.0 296.0 L227.0 288.2 L162.5 242.0 L234.8 274.8 L213.0 221.5 L248.2 267.0 Z" fill="url(#flashOuter)"/>
+  <path d="M279.7 238.7 L267.3 284.7 L313.3 272.3 L272.0 296.0 L313.3 319.7 L267.3 307.3 L279.7 353.3 L256.0 312.0 L232.3 353.3 L244.7 307.3 L198.7 319.7 L240.0 296.0 L198.7 272.3 L244.7 284.7 L232.3 238.7 L256.0 280.0 Z" fill="url(#flashInner)" filter="url(#glow)"/>
+  <g stroke="#fef3c7" stroke-width="2" stroke-linecap="round" opacity=".55">
+    <path d="M263.8 256.8 L274.7 201.8"/>
+    <path d="M278.2 262.7 L294.9 237.8"/>
+    <path d="M289.3 273.8 L335.8 242.7"/>
+    <path d="M295.2 288.2 L324.7 282.3"/>
+    <path d="M295.2 303.8 L350.2 314.7"/>
+    <path d="M289.3 318.2 L314.2 334.9"/>
+    <path d="M278.2 329.3 L309.3 375.8"/>
+    <path d="M263.8 335.2 L269.7 364.7"/>
+    <path d="M248.2 335.2 L237.3 390.2"/>
+    <path d="M233.8 329.3 L217.1 354.2"/>
+    <path d="M222.7 318.2 L176.2 349.3"/>
+    <path d="M216.8 303.8 L187.3 309.7"/>
+    <path d="M216.8 288.2 L161.8 277.3"/>
+    <path d="M222.7 273.8 L197.8 257.1"/>
+    <path d="M233.8 262.7 L202.7 216.2"/>
+    <path d="M248.2 256.8 L242.3 227.3"/>
+  </g>
+  <circle cx="256" cy="296" r="30" fill="#fff" filter="url(#glow)"/>
+  <!-- قبعة التخرّج في قلب الومضة -->
+  <path d="M243 296 V306 C243 312 269 312 269 306 V296 Z" fill="#0b1430"/>
+  <path d="M256 280 L281 291 L256 302 L231 291 Z" fill="#0b1430"/>
+  <path d="M256 291 L276 295 V306" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/><circle cx="276" cy="308" r="3" fill="#f97316"/>
+  <!-- رموز التقنيات تتطاير من الومضة -->
+  <g fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(288.9 235.0)" color="#22d3ee" stroke="#22d3ee"><circle r="16" fill="#0b1430" fill-opacity=".88" stroke-width="2.5"/><rect x="-7" y="-4" width="14" height="11" rx="3"/><path d="M0 -4 V-8"/><circle cy="-9" r="1.6" stroke="none" fill="currentColor"/><circle cx="-3" cy="1.5" r="1.6" stroke="none" fill="currentColor"/><circle cx="3" cy="1.5" r="1.6" stroke="none" fill="currentColor"/></g>
+    <g transform="translate(335.5 270.7)" color="#a78bfa" stroke="#a78bfa"><circle r="16" fill="#0b1430" fill-opacity=".88" stroke-width="2.5"/><path d="M-8 4 H7 A4.5 4.5 0 0 0 6 -5 A6 6 0 0 0 -5 -4 A4 4 0 0 0 -8 4 Z"/></g>
+    <g transform="translate(335.5 321.3)" color="#f472b6" stroke="#f472b6"><circle r="16" fill="#0b1430" fill-opacity=".88" stroke-width="2.5"/><rect x="-9" y="-5" width="18" height="10" rx="4"/><circle cx="-4" r="2.2"/><circle cx="4" r="2.2"/></g>
+    <g transform="translate(288.9 357.0)" color="#facc15" stroke="#facc15"><circle r="16" fill="#0b1430" fill-opacity=".88" stroke-width="2.5"/><path d="M0 -10 C5 -5 5 2 3 6 H-3 C-5 2 -5 -5 0 -10 Z M-3 2 L-7 8 L-3 6 M3 2 L7 8 L3 6"/><circle cy="-2" r="1.8"/></g>
+    <g transform="translate(223.1 357.0)" color="#2dd4bf" stroke="#2dd4bf"><circle r="16" fill="#0b1430" fill-opacity=".88" stroke-width="2.5"/><path d="M-4 -5 L-9 0 L-4 5 M4 -5 L9 0 L4 5 M1.5 -7 L-1.5 7"/></g>
+    <g transform="translate(176.5 321.3)" color="#fb923c" stroke="#fb923c"><circle r="16" fill="#0b1430" fill-opacity=".88" stroke-width="2.5"/><rect x="-5" y="-9" width="10" height="18" rx="2.5"/><path d="M-1.5 5.5 H1.5"/></g>
+    <g transform="translate(176.5 270.7)" color="#38bdf8" stroke="#38bdf8"><circle r="16" fill="#0b1430" fill-opacity=".88" stroke-width="2.5"/><circle r="8"/><ellipse rx="3.5" ry="8"/><path d="M-8 0 H8"/></g>
+    <g transform="translate(223.1 235.0)" color="#e879f9" stroke="#e879f9"><circle r="16" fill="#0b1430" fill-opacity=".88" stroke-width="2.5"/><path d="M-9 -2 A13 13 0 0 1 9 -2 M-5.5 2 A8 8 0 0 1 5.5 2"/><circle cy="6" r="1.8" stroke="none" fill="currentColor"/></g>
+  </g>
+
+  <!-- الكتاب الذهبي بصفحات من دوائر إلكترونية -->
+  <path d="M256 404 C214 376 156 366 98 374 L98 404 C156 398 214 408 256 436 C298 408 356 398 414 404 L414 374 C356 366 298 376 256 404 Z" fill="url(#gold)"/>
+  <path d="M84 414 C156 406 212 424 256 450 C300 424 356 406 428 414 L428 430 C356 424 300 442 256 468 C212 442 156 424 84 430 Z" fill="url(#gold)"/>
+  <g stroke="#7c5a06" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7">
+    <path d="M118 386 H150 L160 380 H186"/><path d="M128 396 H170 L180 392 H214"/>
+    <path d="M394 386 H362 L352 380 H326"/><path d="M384 396 H342 L332 392 H298"/>
+  </g>
+  <g fill="#7c5a06" opacity=".75"><circle cx="190" cy="380" r="3.5"/><circle cx="218" cy="392" r="3.5"/><circle cx="322" cy="380" r="3.5"/><circle cx="294" cy="392" r="3.5"/></g>
+
+  <!-- الذكاء الاصطناعي -->
+  <g transform="translate(54 182)">
+    <circle r="31" fill="#0b1430" stroke="#22d3ee" stroke-width="3.5"/>
+    <g stroke="#67e8f9" stroke-width="2.5" stroke-linecap="round">
+      <path d="M-8 -15 V-20 M0 -15 V-20 M8 -15 V-20 M-8 15 V20 M0 15 V20 M8 15 V20 M-15 -8 H-20 M-15 0 H-20 M-15 8 H-20 M15 -8 H20 M15 0 H20 M15 8 H20"/>
+    </g>
+    <rect x="-15" y="-15" width="30" height="30" rx="5" fill="#0e7490" stroke="#67e8f9" stroke-width="2.5"/>
+    <text y="5.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="15" fill="#fff">AI</text>
+  </g>
+
+  <!-- الأمن السيبراني -->
+  <g transform="translate(458 182)">
+    <circle r="31" fill="#0b1430" stroke="#a78bfa" stroke-width="3.5"/>
+    <path d="M0 -19 L15 -13 V0 C15 10 8 16 0 20 C-8 16 -15 10 -15 0 V-13 Z" fill="#7c3aed" stroke="#c4b5fd" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cy="-2" r="4.5" fill="#fff"/><path d="M-2.5 0 L-3.5 9 H3.5 L2.5 0 Z" fill="#fff"/>
+  </g>
+
+  <!-- التجارة الإلكترونية -->
+  <g transform="translate(256 471)">
+    <circle r="31" fill="#0b1430" stroke="#f472b6" stroke-width="3.5"/>
+    <path d="M-18 -12 H-12 L-7 6 H12 L16 -6 H-10" fill="none" stroke="#f9a8d4" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="-5" cy="13" r="3.5" fill="#f9a8d4"/><circle cx="10" cy="13" r="3.5" fill="#f9a8d4"/>
+    <path d="M2 -16 V-24 M-2 -20 L2 -24 L6 -20" fill="none" stroke="#f9a8d4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

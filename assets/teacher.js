@@ -1,5 +1,5 @@
 /* =========================================================
-   المعرض التقني — لوحة المعلمة لمتابعة تقدّم الطالبات
+   مبدعة التقنية — لوحة المعلمة لمتابعة تقدّم الطالبات
    تقرأ المحاولات من Google Sheets عبر Apps Script (doGet + الرمز السري)
    ========================================================= */
 (function(){
@@ -12,7 +12,7 @@ const fmt = t => new Date(t).toLocaleString('ar-OM',{day:'numeric',month:'short'
 const PINKEY = 'tech-expo:teacher-pin';
 let ROWS = [], F = {lesson:'', cls:'', q:''}, SORT = {k:'overall', dir:-1}, OPEN = null;
 
-$('#hdr').innerHTML = `<div class="bar"><a class="brand" href="../"><span class="mark"><img src="../assets/logo-mark.png" alt="شعار المدرسة"></span>
+$('#hdr').innerHTML = `<div class="bar"><a class="brand" href="../"><span class="mark"><img src="../assets/logo-icon.svg" alt="شعار مبدعة التقنية"></span>
   <span style="min-width:0"><b>بوابة المعلمة</b><small>${esc(P.name)} • ${esc(P.school)}</small></span></a>
   <button class="btn ghost sm" id="setupBtn">⚙️ الإعداد</button></div>`;
 $('#ftr').innerHTML = `${esc(P.school)} • إعداد: <b>${esc(P.teacher)}</b>`;
@@ -27,7 +27,7 @@ function setup(){
     <h2 style="font-size:clamp(22px,4vw,30px);margin:8px 0">ربط المنصة بجدول Google Sheets</h2>
     <p class="muted">تصل نتيجة كل نشاط تنهيه الطالبة إلى جدول في حسابكِ على Google، وتعرض هذه الصفحة ملخّص الصف منه. البيانات تبقى في حسابكِ فقط.</p>
     <ol class="steps2">
-      <li>افتحي <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> لإنشاء جدول جديد، وسمّيه مثلًا «نتائج المعرض التقني».</li>
+      <li>افتحي <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> لإنشاء جدول جديد، وسمّيه مثلًا «نتائج مبدعة التقنية».</li>
       <li>من القائمة: <b>Extensions ← Apps Script</b> (الإضافات ← برمجة التطبيقات).</li>
       <li>احذفي الكود الموجود، والصقي الكود بالأسفل (زر «نسخ الكود»).</li>
       <li>في السطر الأول غيّري <code>TEACHER_PIN</code> إلى رمز سري تختارينه — ستستخدمينه لفتح هذه اللوحة. ثم احفظي 💾.</li>

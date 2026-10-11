@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="51 66 410 410" role="img" aria-label="شعار مبدعة التقنية">
+  <!-- نسخة مبسّطة من شعار «مبدعة التقنية» للأحجام الصغيرة (الترويسة، أيقونة المتصفح، الشهادة) -->
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="#facc15"/><stop offset="1" stop-color="#d4a514"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0d9488"/><stop offset="1" stop-color="#2dd4bf"/>
+    </linearGradient>
+    <radialGradient id="flashHalo">
+      <stop offset="0" stop-color="#fff7d6" stop-opacity=".7"/><stop offset=".5" stop-color="#fb923c" stop-opacity=".3"/><stop offset="1" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="flashOuter">
+      <stop offset="0" stop-color="#fffbeb"/><stop offset=".35" stop-color="#fbbf24"/><stop offset=".75" stop-color="#f97316"/><stop offset="1" stop-color="#ec4899" stop-opacity=".4"/>
+    </radialGradient>
+    <radialGradient id="core">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#a5f3fc"/><stop offset="1" stop-color="#22d3ee"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#facc15" stroke-width="14" stroke-linecap="round">
+    <path d="M256 112 V76"/><path d="M216 122 L198 92"/><path d="M296 122 L314 92"/><path d="M190 150 L160 132"/><path d="M322 150 L352 132"/>
+  </g>
+  <path d="M206 178 A50 50 0 0 1 306 178" fill="none" stroke="url(#gold)" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="256" cy="170" r="22" fill="url(#core)"/>
+  <circle cx="256" cy="300" r="100" fill="url(#flashHalo)"/>
+  <path d="M256.0 176.0 L264.8 267.2 L302.0 220.3 L280.0 276.0 L351.3 245.0 L288.8 291.2 L344.0 300.0 L288.8 308.8 L363.4 362.0 L280.0 324.0 L302.0 379.7 L264.8 332.8 L256.0 410.0 L247.2 332.8 L212.0 376.2 L232.0 324.0 L148.6 362.0 L223.2 308.8 L164.0 300.0 L223.2 291.2 L160.7 245.0 L232.0 276.0 L212.0 223.8 L247.2 267.2 Z" fill="url(#flashOuter)"/>
+  <circle cx="256" cy="300" r="38" fill="#fff"/>
+  <path d="M240 300 V314 C240 322 272 322 272 314 V300 Z" fill="#0b1430"/>
+  <path d="M256 280 L288 294 L256 308 L224 294 Z" fill="#0b1430"/>
+  <circle cx="297.0" cy="242.8" r="11" fill="#22d3ee"/><circle cx="338.0" cy="300.0" r="11" fill="#a78bfa"/><circle cx="297.0" cy="357.2" r="11" fill="#f472b6"/><circle cx="215.0" cy="357.2" r="11" fill="#facc15"/><circle cx="174.0" cy="300.0" r="11" fill="#38bdf8"/><circle cx="215.0" cy="242.8" r="11" fill="#e879f9"/>
+  <g fill="none" stroke="url(#teal)" stroke-width="20" stroke-linecap="round">
+    <path d="M226 398 C176 386 124 364 114 310 C110 286 118 262 126 238"/>
+    <path d="M286 398 C336 386 388 364 398 310 C402 286 394 262 386 238"/>
+  </g>
+  <path d="M256 400 C214 372 150 362 90 370 L90 404 C150 398 214 408 256 438 C298 408 362 398 422 404 L422 370 C362 362 298 372 256 400 Z" fill="url(#gold)"/>
+  <path d="M76 416 C152 408 212 426 256 452 C300 426 360 408 436 416 L436 434 C360 428 300 446 256 472 C212 446 152 428 76 434 Z" fill="url(#gold)"/>
+</svg>
