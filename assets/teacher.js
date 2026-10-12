@@ -10,6 +10,8 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<'
 const fp = v => '⁦' + v + '%⁩';
 const fmt = t => new Date(t).toLocaleString('ar-OM',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 const PINKEY = 'tech-expo:teacher-pin';
+// Google Sheets يحوّل الصف «12/8» إلى تاريخ في الصفوف القديمة؛ نعيده إلى شكله الأصلي
+const fixCls = c => /^\d{4}-\d\d-\d\dT/.test(String(c)) ? (d => `${d.getMonth()+1}/${d.getDate()}`)(new Date(c)) : c;
 let ROWS = [], F = {lesson:'', cls:'', q:''}, SORT = {k:'overall', dir:-1}, OPEN = null;
 
 $('#hdr').innerHTML = `<div class="bar"><a class="brand" href="../"><span class="mark"><img src="../assets/logo-icon.svg" alt="شعار مبدعة التقنية"></span>
@@ -64,7 +66,7 @@ function load(pin){
   fetch(P.sheetUrl + (P.sheetUrl.includes('?')?'&':'?') + 'pin=' + encodeURIComponent(pin))
     .then(r => r.json()).then(d => {
       if(!d.ok){ sessionStorage.removeItem(PINKEY); login(); $('#err').textContent='الرمز السري غير صحيح'; return; }
-      sessionStorage.setItem(PINKEY, pin); const seen = new Set(); ROWS = d.rows.filter(r => { const k=r.device+'|'+r.t+'|'+r.act; if(!r.name || seen.has(k)) return false; seen.add(k); return true; }); dashboard();
+      sessionStorage.setItem(PINKEY, pin); const seen = new Set(); ROWS = d.rows.map(r => Object.assign(r, {cls: fixCls(r.cls)})).filter(r => { const k=r.device+'|'+r.t+'|'+r.act; if(!r.name || seen.has(k)) return false; seen.add(k); return true; }); dashboard();
     }).catch(() => { render(`<section class="panel center"><p class="lead">تعذّر الاتصال بجدول النتائج. تأكّدي من الإنترنت ومن رابط Web app.</p><button class="btn" id="re">إعادة المحاولة</button></section>`); $('#re').onclick=()=>load(pin); });
 }
 

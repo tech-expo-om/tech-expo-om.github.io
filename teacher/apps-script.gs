@@ -26,11 +26,9 @@ function sheet_() {
   return sh;
 }
 
-// نص آمن: يقصّ الطول ويمنع تحويل النص إلى معادلة
+// نص آمن: يقصّ الطول، ويُحفظ نصًا دائمًا (يمنع المعادلات وتحويل الصف «12/8» إلى تاريخ)
 function txt_(v, n) {
-  let s = String(v == null ? '' : v).slice(0, n);
-  if (/^[=+\-@]/.test(s)) s = "'" + s;
-  return s;
+  return "'" + String(v == null ? '' : v).slice(0, n);
 }
 const num_ = v => (isFinite(Number(v)) ? Number(v) : 0);
 
