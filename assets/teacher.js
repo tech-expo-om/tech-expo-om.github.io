@@ -37,7 +37,7 @@ function setup(){
     </ol>
     <div class="row" style="margin:14px 0"><button class="btn" id="copyCode">📋 نسخ الكود</button><span class="muted" id="copyMsg"></span></div>
     <pre class="code" id="code" dir="ltr">جارٍ تحميل الكود…</pre>
-    <div class="note"><b>🔒 الخصوصية:</b> تُرسل المنصة اسم الطالبة وصفّها ونتائج الأنشطة فقط. لا يستطيع أحد قراءة الجدول من هذه الصفحة دون الرمز السري. وإذا غيّرتِ الكود لاحقًا فاختاري <b>Deploy ← Manage deployments ← Edit ← New version</b> ليبقى الرابط نفسه.</div>
+    <div class="note"><b>🔒 الخصوصية:</b> تُرسل المنصة اسم الطالبة وصفّها ونتائج الأنشطة وإجابة سؤال التأمل، ووقت فتحها للشهادة أو طباعتها فقط. لا يستطيع أحد قراءة الجدول من هذه الصفحة دون الرمز السري. وإذا غيّرتِ الكود لاحقًا فاختاري <b>Deploy ← Manage deployments ← Edit ← New version</b> ليبقى الرابط نفسه.</div>
     ${P.sheetUrl?'<div class="spacer"></div><div class="row c"><button class="btn gold" id="toDash">العودة إلى اللوحة ←</button></div>':''}
   </section>`);
   fetch('apps-script.gs').then(r=>r.text()).then(t=>{ $('#code').textContent=t; });
@@ -70,27 +70,32 @@ function load(pin){
 
 /* ---------- تجميع البيانات ---------- */
 const actOrder = a => a==='final' ? 999 : (parseInt(String(a).replace(/\D/g,''))||500);
+const isCert = r => String(r.act).startsWith('cert-'); // فتح الشهادة أو طباعتها — ليست نشاطًا
 function model(){
-  const rows = ROWS.filter(r => r.lesson===F.lesson && (!F.cls || r.cls===F.cls));
+  const all = ROWS.filter(r => r.lesson===F.lesson && (!F.cls || r.cls===F.cls));
+  const rows = all.filter(r => !isCert(r)), certs = all.filter(isCert);
   const acts = [...new Map(rows.map(r=>[r.act,{id:r.act,title:r.actTitle}])).values()].sort((a,b)=>actOrder(a.id)-actOrder(b.id));
   const nActs = Math.max(acts.length, ...rows.map(r=>r.acts||0), 1);
   const studs = new Map();
   rows.forEach(r => {
     const k = String(r.name).trim()+'|'+String(r.cls).trim();
-    if(!studs.has(k)) studs.set(k, {name:String(r.name).trim(), cls:String(r.cls).trim(), best:{}, tries:{}, hist:[], last:0});
+    if(!studs.has(k)) studs.set(k, {name:String(r.name).trim(), cls:String(r.cls).trim(), best:{}, tries:{}, hist:[], certs:[], last:0});
     const s = studs.get(k); s.hist.push(r); s.last = Math.max(s.last, r.t);
     s.best[r.act] = Math.max(s.best[r.act]??-1, Number(r.pct)); s.tries[r.act] = (s.tries[r.act]||0)+1;
   });
+  certs.forEach(r => { const s = studs.get(String(r.name).trim()+'|'+String(r.cls).trim()); if(s) s.certs.push(r); });
+  const actMax = {}; rows.forEach(r => { actMax[r.act] = Number(r.max); });
   const list = [...studs.values()].map(s => {
     const done = Object.keys(s.best).length;
     s.done = done; s.attempts = s.hist.length;
+    s.cert = !('final' in s.best) ? 0 : s.certs.some(r=>r.act==='cert-print') ? 3 : s.certs.length ? 2 : 1; // للترتيب
     s.overall = done ? Math.round(Object.values(s.best).reduce((t,v)=>t+v,0) / done) : 0; // متوسط أفضل نتائج الأنشطة التي حاولتها
     return s;
   }).filter(s => !F.q || s.name.includes(F.q));
   const miss = new Map();
   rows.forEach(r => (r.misses||[]).forEach(q => { if(q) miss.set(q, (miss.get(q)||0)+1); }));
   const topMiss = [...miss.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10);
-  return {rows, acts, nActs, list, topMiss};
+  return {rows, acts, nActs, list, topMiss, actMax};
 }
 
 /* ---------- اللوحة ---------- */
@@ -126,13 +131,13 @@ function dashboard(){
     </div>
     ${M.list.length ? `<div class="tblWrap"><table class="dash">
       <thead><tr>${th('name','الطالبة')}${th('cls','الصف')}${th('done','الإنجاز')}${th('overall','متوسط النتائج')}
-        ${M.acts.map(a=>th('act:'+a.id, esc(a.title))).join('')}${th('attempts','المحاولات')}${th('last','آخر نشاط')}</tr></thead>
+        ${M.acts.map(a=>th('act:'+a.id, esc(a.title))).join('')}${th('cert','📜 الشهادة')}${th('attempts','المحاولات')}${th('last','آخر نشاط')}</tr></thead>
       <tbody>${M.list.map((s,i)=>`<tr class="srow" data-i="${i}">
         <td><b>${esc(s.name)}</b></td><td>${esc(s.cls)}</td><td>${s.done} / ${M.nActs}</td>
         <td class="hc strong" style="--v:${s.overall}">${fp(s.overall)}${s.overall<60?' ⚠️':''}</td>
-        ${M.acts.map(a=>cell(s.best[a.id])).join('')}<td>${s.attempts}</td><td class="muted">${fmt(s.last)}</td></tr>
-        ${OPEN===s.name+'|'+s.cls?`<tr class="detail"><td colspan="${6+M.acts.length}">${detail(s, M.acts)}</td></tr>`:''}`).join('')}</tbody>
-    </table></div><p class="muted" style="font-size:12.5px;margin-top:6px">اضغطي على اسم الطالبة لعرض كل محاولاتها • اضغطي على عنوان العمود للترتيب • «متوسط النتائج» يُحسب من الأنشطة التي حاولتها الطالبة • ⚠️ = أقل من 60%</p>`
+        ${M.acts.map(a=>cell(s.best[a.id])).join('')}<td class="${s.cert?'':'muted'}">${CERT[s.cert]}</td><td>${s.attempts}</td><td class="muted">${fmt(s.last)}</td></tr>
+        ${OPEN===s.name+'|'+s.cls?`<tr class="detail"><td colspan="${7+M.acts.length}">${detail(s, M.acts, i)}</td></tr>`:''}`).join('')}</tbody>
+    </table></div><p class="muted" style="font-size:12.5px;margin-top:6px">اضغطي على اسم الطالبة لعرض كل محاولاتها • اضغطي على عنوان العمود للترتيب • «متوسط النتائج» يُحسب من الأنشطة التي حاولتها الطالبة • ⚠️ = أقل من 60% • 📜 حصلت على الشهادة، 👁️ فتحتها، 🖨️ ضغطت «طباعة / حفظ PDF»</p>`
     : `<div class="empty">لا توجد نتائج بعد لهذا الدرس${F.cls?' في هذه الشعبة':''}. ستظهر هنا فور إنهاء الطالبات أول نشاط.</div>`}
     <h3 class="sectionT">❗ أكثر الأسئلة خطأً</h3>
     ${M.topMiss.length ? `<div class="missList">${M.topMiss.map(([q,n])=>`<div class="mi"><span class="mq">${esc(q)}</span><span class="mb"><i style="width:${Math.round(n/maxMiss*100)}%"></i></span><b>${n}</b></div>`).join('')}</div>`
@@ -146,15 +151,44 @@ function dashboard(){
   $('#refresh').onclick = () => load(sessionStorage.getItem(PINKEY));
   $('#logout').onclick = () => { sessionStorage.removeItem(PINKEY); ROWS=[]; login(); };
   $('#csv').onclick = () => exportCSV(M.rows);
+  $$('.certView').forEach(b => b.onclick = () => certScreen(M.list[+b.dataset.i], M));
 }
-function detail(s, acts){
-  return `<div class="hActs">${acts.map(a=>{ const h=s.hist.filter(r=>r.act===a.id).sort((x,y)=>x.t-y.t);
+const CERT = ['—', '📜 حصلت عليها', '👁️ فتحتها', '🖨️ طبعتها'];
+function detail(s, acts, i){
+  const views = s.certs.filter(r=>r.act==='cert-view').sort((x,y)=>x.t-y.t), prints = s.certs.filter(r=>r.act==='cert-print').sort((x,y)=>x.t-y.t);
+  const cert = `<div class="hAct" style="--c:#facc15"><div class="hh"><h4>📜 الشهادة</h4><span class="status ${s.cert?'done':''}">${s.cert?CERT[s.cert]:'لم تحصل عليها بعد'}</span></div>
+    ${s.cert ? `<div class="kp"><span>👁️ ${views.length?`فتحتها ${views.length} ${views.length===1?'مرة':'مرات'} — أول مرة: ${fmt(views[0].t)}`:'لم تفتحها بعد'}</span>
+      <span>🖨️ ${prints.length?`ضغطت «طباعة / حفظ PDF» ${prints.length} ${prints.length===1?'مرة':'مرات'} — آخرها: ${fmt(prints.at(-1).t)}`:'لم تضغط «طباعة / حفظ PDF» بعد'}</span></div>
+      <button class="btn gold sm certView" data-i="${i}">عرض الشهادة 📜</button>`
+    : '<div class="empty">تُمنح الشهادة بعد إنهاء التقويم الختامي.</div>'}</div>`;
+  return `<div class="hActs">${cert}${acts.map(a=>{ const h=s.hist.filter(r=>r.act===a.id).sort((x,y)=>x.t-y.t);
     if(!h.length) return `<div class="hAct" style="--c:#475569"><h4>${esc(a.title)}</h4><div class="empty">لم تحاول بعد</div></div>`;
     return `<div class="hAct" style="--c:#14b8a6"><div class="hh"><h4>${esc(a.title)}</h4><span class="status done">أفضل: ${fp(Math.max(...h.map(r=>r.pct)))}</span></div>
       <table class="mini"><thead><tr><th>#</th><th>التاريخ</th><th>النتيجة</th><th>الأخطاء</th></tr></thead><tbody>
       ${h.map((r,i)=>`<tr><td>${i+1}</td><td>${fmt(r.t)}</td><td>${r.score}/${r.max} (${fp(r.pct)})</td><td>${r.mistakes}</td></tr>`).join('')}</tbody></table>
       ${h.some(r=>r.misses.length)?`<details class="tbl"><summary>الأسئلة التي أخطأت فيها</summary><ul class="ml">${[...new Set(h.flatMap(r=>r.misses))].map(q=>`<li>${esc(q)}</li>`).join('')}</ul></details>`:''}
     </div>`; }).join('')}</div>`;
+}
+/* ---------- عرض شهادة طالبة (تُبنى من النتائج المسجّلة في الجدول) ---------- */
+const LESSONS = {};
+function lessonData(id){ // تحميل lesson.js للدرس عند الحاجة لمعرفة عنوان الشهادة ونصّها
+  if(LESSONS[id]) return Promise.resolve(LESSONS[id]);
+  const l = P.lessons.find(x=>x.id===id);
+  if(!l) return Promise.reject();
+  return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = '../' + l.path + 'lesson.js';
+    sc.onload = () => ok(LESSONS[id] = window.LESSON); sc.onerror = no; document.head.append(sc); });
+}
+function certScreen(s, M){
+  render(`<section class="panel center"><p class="lead">⏳ جارٍ تجهيز الشهادة…</p></section>`); scrollTo(0,0);
+  lessonData(F.lesson).then(L => {
+    const finals = s.hist.filter(r=>r.act==='final').sort((a,b)=>a.t-b.t), refl = finals.filter(r=>r.reflect);
+    const total = M.acts.reduce((t,a) => { const h=s.hist.filter(r=>r.act===a.id); return t + (h.length ? Math.max(...h.map(r=>Number(r.score))) : 0); }, 0);
+    const max = M.acts.reduce((t,a) => t + M.actMax[a.id], 0);
+    render(`<section>${TechCert.html({P, L, name:s.name, total, max, attempts:s.attempts, reflect:refl.length?refl.at(-1).reflect:'', date:finals.at(-1).t})}
+      <p class="center muted noPrint" style="font-size:13px;margin-top:10px">نسخة من شهادة ${esc(s.name)} (${esc(s.cls)}) مبنية على أفضل نتائجها المسجّلة في الجدول، بتاريخ آخر تقويم ختامي.</p>
+      <div class="row c noPrint" style="margin-top:14px"><button class="btn gold" id="printBtn">🖨️ طباعة / حفظ PDF</button><button class="btn ghost" id="backBtn">العودة إلى اللوحة ←</button></div></section>`);
+    TechCert.tilt(); $('#printBtn').onclick = () => window.print(); $('#backBtn').onclick = dashboard;
+  }).catch(() => { render(`<section class="panel center"><p class="lead">تعذّر تحميل بيانات الدرس.</p><button class="btn" id="backBtn">العودة إلى اللوحة</button></section>`); $('#backBtn').onclick = dashboard; });
 }
 function exportCSV(rows){
   const head = ['التاريخ','الاسم','الصف','الدرس','النشاط','رقم المحاولة','النتيجة','الدرجة العظمى','النسبة','الأخطاء'];

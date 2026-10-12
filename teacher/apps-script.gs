@@ -10,17 +10,18 @@ const TEACHER_PIN = 'غيّريني-1234';
 
 const SHEET_NAME = 'المحاولات';
 const HEAD = ['التاريخ', 'الاسم', 'الصف', 'الدرس', 'رمز الدرس', 'النشاط', 'رمز النشاط', 'رقم المحاولة',
-              'النتيجة', 'الدرجة العظمى', 'النسبة %', 'الأخطاء', 'عدد أنشطة الدرس', 'الأسئلة الخاطئة', 'معرّف الجهاز'];
+              'النتيجة', 'الدرجة العظمى', 'النسبة %', 'الأخطاء', 'عدد أنشطة الدرس', 'الأسئلة الخاطئة', 'معرّف الجهاز', 'نص التأمل'];
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);
-    sh.appendRow(HEAD);
     sh.setFrozenRows(1);
     sh.setRightToLeft(true);
-    sh.getRange(1, 1, 1, HEAD.length).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
+  }
+  if (sh.getRange(1, HEAD.length).isBlank()) { // جدول قديم: إضافة عناوين الأعمدة الجديدة
+    sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
   }
   return sh;
 }
@@ -42,7 +43,7 @@ function doPost(e) {
     sheet_().appendRow([
       new Date(num_(d.ts) || Date.now()), txt_(d.name, 80), txt_(d.cls, 20), txt_(d.lessonTitle, 80), txt_(d.lesson, 60),
       txt_(d.actTitle, 80), txt_(d.act, 20), num_(d.attempt), num_(d.score), num_(d.max), num_(d.pct), num_(d.mistakes),
-      num_(d.acts), txt_((d.misses || []).join(' | '), 3000), txt_(d.device, 40)
+      num_(d.acts), txt_((d.misses || []).join(' | '), 3000), txt_(d.device, 40), txt_(d.reflect, 1000)
     ]);
   } finally {
     lock.releaseLock();
@@ -58,7 +59,7 @@ function doGet(e) {
   const rows = values.map(r => ({
     t: new Date(r[0]).getTime(), name: r[1], cls: r[2], lessonTitle: r[3], lesson: r[4], actTitle: r[5], act: r[6],
     attempt: r[7], score: r[8], max: r[9], pct: r[10], mistakes: r[11], acts: r[12],
-    misses: r[13] ? String(r[13]).split(' | ') : [], device: r[14]
+    misses: r[13] ? String(r[13]).split(' | ') : [], device: r[14], reflect: String(r[15] || '')
   }));
   return json_({ ok: true, rows: rows });
 }
