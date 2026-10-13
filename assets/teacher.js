@@ -79,18 +79,20 @@ function model(){
   const acts = [...new Map(rows.map(r=>[r.act,{id:r.act,title:r.actTitle}])).values()].sort((a,b)=>actOrder(a.id)-actOrder(b.id));
   const nActs = Math.max(acts.length, ...rows.map(r=>r.acts||0), 1);
   const studs = new Map();
-  rows.forEach(r => {
-    const k = String(r.name).trim()+'|'+String(r.cls).trim();
+  const stud = r => { const k = String(r.name).trim()+'|'+String(r.cls).trim();
     if(!studs.has(k)) studs.set(k, {name:String(r.name).trim(), cls:String(r.cls).trim(), best:{}, tries:{}, hist:[], certs:[], last:0});
-    const s = studs.get(k); s.hist.push(r); s.last = Math.max(s.last, r.t);
+    return studs.get(k); };
+  rows.forEach(r => {
+    const s = stud(r); s.hist.push(r); s.last = Math.max(s.last, r.t);
     s.best[r.act] = Math.max(s.best[r.act]??-1, Number(r.pct)); s.tries[r.act] = (s.tries[r.act]||0)+1;
   });
-  certs.forEach(r => { const s = studs.get(String(r.name).trim()+'|'+String(r.cls).trim()); if(s) s.certs.push(r); });
+  certs.forEach(r => { const s = stud(r); s.certs.push(r); s.last = Math.max(s.last, r.t); });
   const actMax = {}; rows.forEach(r => { actMax[r.act] = Number(r.max); });
   const list = [...studs.values()].map(s => {
     const done = Object.keys(s.best).length;
     s.done = done; s.attempts = s.hist.length;
-    s.cert = !('final' in s.best) ? 0 : s.certs.some(r=>r.act==='cert-print') ? 3 : s.certs.length ? 2 : 1; // للترتيب
+    // الشهادة لا تُفتح إلا بعد التقويم، فوجود صف فتحها يثبت الإكمال حتى لو لم يصل صف التقويم نفسه
+    s.cert = !('final' in s.best) && !s.certs.length ? 0 : s.certs.some(r=>r.act==='cert-print') ? 3 : s.certs.length ? 2 : 1; // للترتيب
     s.overall = done ? Math.round(Object.values(s.best).reduce((t,v)=>t+v,0) / done) : 0; // متوسط أفضل نتائج الأنشطة التي حاولتها
     return s;
   }).filter(s => !F.q || s.name.includes(F.q));
@@ -186,7 +188,7 @@ function certScreen(s, M){
     const finals = s.hist.filter(r=>r.act==='final').sort((a,b)=>a.t-b.t), refl = finals.filter(r=>r.reflect);
     const total = M.acts.reduce((t,a) => { const h=s.hist.filter(r=>r.act===a.id); return t + (h.length ? Math.max(...h.map(r=>Number(r.score))) : 0); }, 0);
     const max = M.acts.reduce((t,a) => t + M.actMax[a.id], 0);
-    render(`<section>${TechCert.html({P, L, name:s.name, total, max, attempts:s.attempts, reflect:refl.length?refl.at(-1).reflect:'', date:finals.at(-1).t})}
+    render(`<section>${TechCert.html({P, L, name:s.name, total, max, attempts:s.attempts, reflect:refl.length?refl.at(-1).reflect:'', date:(finals.at(-1)||s.certs.reduce((a,b)=>a.t<b.t?a:b)).t})}
       <p class="center muted noPrint" style="font-size:13px;margin-top:10px">نسخة من شهادة ${esc(s.name)} (${esc(s.cls)}) مبنية على أفضل نتائجها المسجّلة في الجدول، بتاريخ آخر تقويم ختامي.</p>
       <div class="row c noPrint" style="margin-top:14px"><button class="btn gold" id="printBtn">🖨️ طباعة / حفظ PDF</button><button class="btn ghost" id="backBtn">العودة إلى اللوحة ←</button></div></section>`);
     TechCert.tilt(); $('#printBtn').onclick = () => window.print(); $('#backBtn').onclick = dashboard;
