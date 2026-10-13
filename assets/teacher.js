@@ -164,7 +164,8 @@ function detail(s, acts, i){
     ${s.cert ? `<div class="kp"><span>👁️ ${views.length?`فتحتها ${views.length} ${views.length===1?'مرة':'مرات'} — أول مرة: ${fmt(views[0].t)}`:'لم تفتحها بعد'}</span>
       <span>🖨️ ${prints.length?`ضغطت «طباعة / حفظ PDF» ${prints.length} ${prints.length===1?'مرة':'مرات'} — آخرها: ${fmt(prints.at(-1).t)}`:'لم تضغط «طباعة / حفظ PDF» بعد'}</span></div>
       <button class="btn gold sm certView" data-i="${i}">عرض الشهادة 📜</button>`
-    : '<div class="empty">تُمنح الشهادة بعد إنهاء التقويم الختامي.</div>'}</div>`;
+    : `<div class="empty">لم تصل نتيجة التقويم الختامي بعد — تُبنى الشهادة من الأنشطة التي أنجزتها.</div>
+      <button class="btn gold sm certView" data-i="${i}">إنشاء الشهادة 📜</button>`}</div>`;
   return `<div class="hActs">${cert}${acts.map(a=>{ const h=s.hist.filter(r=>r.act===a.id).sort((x,y)=>x.t-y.t);
     if(!h.length) return `<div class="hAct" style="--c:#475569"><h4>${esc(a.title)}</h4><div class="empty">لم تحاول بعد</div></div>`;
     return `<div class="hAct" style="--c:#14b8a6"><div class="hh"><h4>${esc(a.title)}</h4><span class="status done">أفضل: ${fp(Math.max(...h.map(r=>r.pct)))}</span></div>
@@ -186,10 +187,11 @@ function certScreen(s, M){
   render(`<section class="panel center"><p class="lead">⏳ جارٍ تجهيز الشهادة…</p></section>`); scrollTo(0,0);
   lessonData(F.lesson).then(L => {
     const finals = s.hist.filter(r=>r.act==='final').sort((a,b)=>a.t-b.t), refl = finals.filter(r=>r.reflect);
-    const total = M.acts.reduce((t,a) => { const h=s.hist.filter(r=>r.act===a.id); return t + (h.length ? Math.max(...h.map(r=>Number(r.score))) : 0); }, 0);
-    const max = M.acts.reduce((t,a) => t + M.actMax[a.id], 0);
-    render(`<section>${TechCert.html({P, L, name:s.name, total, max, attempts:s.attempts, reflect:refl.length?refl.at(-1).reflect:'', date:(finals.at(-1)||s.certs.reduce((a,b)=>a.t<b.t?a:b)).t})}
-      <p class="center muted noPrint" style="font-size:13px;margin-top:10px">نسخة من شهادة ${esc(s.name)} (${esc(s.cls)}) مبنية على أفضل نتائجها المسجّلة في الجدول، بتاريخ آخر تقويم ختامي.</p>
+    const done = M.acts.filter(a => a.id in s.best); // الأنشطة التي أنجزتها فقط، فتطابق النسبة ما في اللوحة تقريبًا
+    const total = done.reduce((t,a) => t + Math.max(...s.hist.filter(r=>r.act===a.id).map(r=>Number(r.score))), 0);
+    const max = done.reduce((t,a) => t + M.actMax[a.id], 0);
+    render(`<section>${TechCert.html({P, L, name:s.name, total, max, attempts:s.attempts, reflect:refl.length?refl.at(-1).reflect:'', date:finals.length?finals.at(-1).t:s.last})}
+      <p class="center muted noPrint" style="font-size:13px;margin-top:10px">نسخة من شهادة ${esc(s.name)} (${esc(s.cls)}) مبنية على أفضل نتائجها المسجّلة في الجدول، بتاريخ ${finals.length?'آخر تقويم ختامي':'آخر نشاط لها'}.</p>
       <div class="row c noPrint" style="margin-top:14px"><button class="btn gold" id="printBtn">🖨️ طباعة / حفظ PDF</button><button class="btn ghost" id="backBtn">العودة إلى اللوحة ←</button></div></section>`);
     TechCert.tilt(); $('#printBtn').onclick = () => window.print(); $('#backBtn').onclick = dashboard;
   }).catch(() => { render(`<section class="panel center"><p class="lead">تعذّر تحميل بيانات الدرس.</p><button class="btn" id="backBtn">العودة إلى اللوحة</button></section>`); $('#backBtn').onclick = dashboard; });
