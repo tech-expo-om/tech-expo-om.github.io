@@ -212,6 +212,38 @@ textarea{width:100%;min-height:130px;border-radius:14px;padding:12px 14px;backgr
 .discuss{border-radius:20px;padding:16px;background:linear-gradient(135deg,rgba(167,139,250,.14),rgba(236,72,153,.1));border:1px solid rgba(167,139,250,.4)}
 .discuss h4{font-size:17px;margin-bottom:6px}
 .count{font-size:12.5px;color:var(--muted);margin-top:4px}
+/* محاكاة واجهة البرامج (sim) */
+.simTask{border-radius:16px;padding:12px 14px;margin-bottom:12px;background:var(--card2);border:1px solid var(--line);border-right:4px solid var(--accent)}
+.simTask h4{font-size:17px;margin:6px 0 8px}
+.simSteps{display:flex;flex-wrap:wrap;gap:6px}
+.simSteps span{font-size:12.5px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--muted)}
+.simSteps span.ok{background:rgba(16,185,129,.18);color:#a7f3d0} .simSteps span.cur{background:var(--sun);color:#1b1300}
+.simWin{display:flex;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.18);min-height:300px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+.simSide{flex:0 0 min(42%,240px);background:#23262d;padding:10px;display:flex;flex-direction:column;gap:8px}
+.simBrand{font-style:italic;font-size:17px;color:#fff;direction:ltr;text-align:left;font-family:system-ui,sans-serif}
+.simT{font-size:12px;color:#9aa3b5;font-weight:800}
+.simList{display:grid;gap:6px}
+.simBtn{display:block;width:100%;text-align:right;padding:9px 11px;border-radius:8px;background:#3a3f4a;color:#f1f3f7;font-size:14px;font-weight:700;line-height:1.4;border:2px solid transparent;transition:border-color .15s,background .15s}
+.simBtn:hover{border-color:var(--sun)}
+.simBtn.no{border-color:var(--bad);background:#5a2733} .simBtn.ok{border-color:var(--ok);background:#1f4d3f}
+.simBtn.off{opacity:.45;cursor:default;pointer-events:none}
+.simCanvas{flex:1;position:relative;background:#f6f7fb;color:#1d2433;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.simCanvas.dim .simSite{opacity:.25}
+.simSite{text-align:center}
+.simSite h4{font-size:clamp(20px,4vw,30px);font-weight:500}
+.simSite p{font-size:14px;color:#4b5565}
+.simChips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.simChips .simBtn{width:auto;background:#111;color:#fff;font-size:13px;padding:7px 12px}
+.simDlg{position:absolute;inset:auto 8% auto 8%;top:50%;transform:translateY(-50%);background:#fff;border-radius:12px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.simDlg h5{font-size:16px;margin-bottom:10px;color:#1d2433}
+.simDlg .simBtn{background:#eef0f5;color:#1d2433}
+.simDlg .simBtn.no{background:#fde2e7} .simDlg .simBtn.ok{background:#d1fae5}
+.simPhone{max-width:380px;margin:0 auto;border-radius:28px;border:8px solid #111;background:#fff;color:#111;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+.simBar{padding:12px 14px;font-weight:800;font-size:16px;border-bottom:1px solid #e5e7eb;direction:ltr;text-align:left;font-family:system-ui,sans-serif}
+.simPhone .simList{padding:10px;gap:4px}
+.simPhone .simBtn{background:#fff;color:#111;border:1px solid #e5e7eb;direction:ltr;text-align:left;font-family:system-ui,sans-serif}
+.simPhone .simBtn.no{background:#fde2e7;border-color:var(--bad)} .simPhone .simBtn.ok{background:#d1fae5;border-color:var(--ok)}
+@media(max-width:560px){.simWin{flex-direction:column}.simSide{flex-basis:auto}.simCanvas{min-height:200px}}
 .gameBar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 
 /* ---------- results & review ---------- */

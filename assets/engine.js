@@ -31,6 +31,7 @@ function maxOf(g){
   if(g.type==='sort'||g.type==='order') return g.items.length*10;
   if(g.type==='pick') return g.items.filter(i=>i[1]).length*10;
   if(g.type==='mcq') return g.qs.length*10;
+  if(g.type==='sim') return g.tasks.length*10;
   return 0;
 }
 const ACTS = L ? [
@@ -493,6 +494,47 @@ const ENGINES = {
     };
     show();
   },
+  sim(g, el, next, label){ // محاكاة واجهة برنامج: تنفّذ الطالبة كل مهمة بالضغط على العناصر الصحيحة بالترتيب
+    let ti=0, si=0, missed=false;
+    const drawStep = () => {
+      const T=g.tasks[ti], st=T.steps[si], ui=st.ui||'side';
+      const opts = st.o.map((o,i)=>`<button class="simBtn" data-i="${i}">${o}</button>`).join('');
+      const site = `<div class="simSite"><h4>${esc(g.site||'')}</h4><p>${esc(g.tagline||'')}</p></div>`;
+      let screen;
+      if(ui==='phone') screen = `<div class="simPhone"><div class="simBar">${esc(st.t||g.user||'')}</div><div class="simList">${opts}</div></div>`;
+      else {
+        const side = ui==='side' ? `<div class="simSide"><b class="simBrand">${esc(g.app||'')}</b>${st.t?`<span class="simT">${st.t}</span>`:''}<div class="simList">${opts}</div></div>`
+          : `<div class="simSide"><b class="simBrand">${esc(g.app||'')}</b><div class="simList">${(g.deco||[]).map(d=>`<span class="simBtn off">${d}</span>`).join('')}</div></div>`;
+        const canvas = ui==='canvas' ? `<div class="simCanvas">${site}<div class="simChips">${opts}</div></div>`
+          : ui==='dialog' ? `<div class="simCanvas dim">${site}<div class="simDlg">${st.t?`<h5>${st.t}</h5>`:''}<div class="simList">${opts}</div></div></div>`
+          : `<div class="simCanvas">${site}</div>`;
+        screen = `<div class="simWin">${side}${canvas}</div>`;
+      }
+      el.innerHTML = `${gHead(g,label,'محاكاة')}
+        <div class="simTask"><span class="kicker">🎯 المهمة ${ti+1} من ${g.tasks.length}</span><h4>${T.goal}</h4>
+        <div class="simSteps">${T.steps.map((s,k)=>`<span class="${k<si?'ok':k===si?'cur':''}">${k<si?'✔ '+s.o[s.c]:k===si?'الخطوة '+(k+1):'•'}</span>`).join('')}</div></div>
+        ${screen}${MSG_BOX}`;
+      el.querySelectorAll('.simBtn[data-i]').forEach(b=>b.onclick=()=>{
+        const i=+b.dataset.i;
+        if(i===st.c){
+          tone('ok');
+          if(++si<T.steps.length) return drawStep();
+          addPts(missed?4:10); confetti(30);
+          const last = ti===g.tasks.length-1;
+          el.querySelectorAll('.simBtn').forEach(x=>x.disabled=true); b.classList.add('ok');
+          if(last) return endGame(el,next,'نفّذتِ كل المهام بنجاح! 🎉');
+          msg(missed?'أنجزتِ المهمة 👏 ركّزي في المهمة التالية لتحصلي على العلامة الكاملة.':'مهمة مثالية من المحاولة الأولى! 🌟','ok');
+          el.querySelector('#gEnd').innerHTML = `<div class="gameBar"><span></span><button class="btn" id="nt">المهمة التالية ←</button></div>`;
+          $('#nt').onclick=()=>{ tone('tap'); ti++; si=0; missed=false; drawStep(); };
+        } else {
+          if(!missed) logMiss(`${T.goal} (الخطوة ${si+1})`, st.o[i], st.o[st.c], st.h);
+          missed=true; tone('no'); b.classList.add('no','shake'); setTimeout(()=>b.classList.remove('no','shake'),600);
+          msg('ليس هذا الزر… '+(st.h?'💡 '+st.h:'جرّبي مرة أخرى.'),'no');
+        }
+      });
+    };
+    drawStep();
+  },
   discuss(g, el, next, label){
     el.innerHTML = `${gHead(g,label,'نقاش')}
       <div class="discuss"><h4>${g.q}</h4><p class="muted" style="font-size:14px">ناقشي الفكرة مع زميلاتكِ، ثم اكتبي خلاصة رأيكِ (اختياري).</p>
@@ -647,6 +689,7 @@ const TOURS = {
   'game-pick':[['.chips .tile','اضغطي على كل بطاقة صحيحة لتحديدها، واضغطي مرة أخرى لإلغاء التحديد.'],['#chk','ثم اضغطي «تحقّقي» لرؤية النتيجة.']],
   'game-mcq':[['.dots','مؤشر الأسئلة: الأخضر صحيح والأحمر خطأ.'],['.opts','اختاري إجابة واحدة.'],['.qcard','بعد الإجابة يظهر التوضيح وزر السؤال التالي.']],
   'game-discuss':[['.discuss','ناقشي السؤال مع زميلاتكِ واكتبي خلاصة رأيكِ (اختياري).'],['#nx','ثم اضغطي «متابعة».']],
+  'game-sim':[['.simTask','اقرئي المهمة المطلوبة؛ هنا تظهر الخطوات التي أنجزتِها.'],['.simWin,.simPhone','هذه محاكاة لشاشة البرنامج: اضغطي على الزر الصحيح كما تفعلين في البرنامج الحقيقي.'],['#gMsg','عند الخطأ يظهر هنا تلميح يساعدكِ.']],
   reflect:[['#ta','اكتبي رأيكِ هنا؛ يظهر عدّاد الحروف بالأسفل.'],['#fin','ثم اعرضي نتيجتكِ.']],
   result:[['.scoreRow','نتيجة هذه المحاولة.'],['.attemptNote','رقم المحاولة ومقارنتها بأفضل نتيجة سابقة.'],['.review,.feedback','دليل المراجعة: إجابتكِ، والصحيح، والسبب.'],['#retryBtn','حاولي مرة أخرى لتحسين نتيجتكِ؛ تُحفظ أفضل نتيجة.'],['#histBtn','وتجدين كل محاولاتكِ في «سجلّي».']],
   history:[['.hTiles','ملخّص تقدّمكِ في الدرس.'],['.hAct','لكل نشاط: عدد المحاولات، وأفضل نتيجة، ومقدار التحسّن.'],['.bars','كل عمود محاولة؛ مرّري المؤشر أو اضغطي عليه لرؤية التفاصيل.'],['details.tbl','أو افتحي الجدول لرؤية كل المحاولات بالتاريخ.']],
