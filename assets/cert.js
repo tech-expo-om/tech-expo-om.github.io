@@ -48,7 +48,7 @@ function html(d){
           </div>
           <div class="emblem z3">${emblem()}</div>
           <div class="ribbon z3"><span>${esc(L.cert.title)}</span></div>
-          <p class="cSub z1">${esc(L.expo)}</p>
+          <p class="cSub z1">${esc(L.expo)} — شهادة مشاركة تدريبية</p>
           <p class="cTxt z1">تُمنح هذه الشهادة بكل فخر واعتزاز للطالبة المبدعة</p>
           <div class="cName z4">${esc(d.name)}</div>
           <p class="cTxt z1">${esc(L.cert.reason)}</p>
