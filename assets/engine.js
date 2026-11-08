@@ -17,13 +17,13 @@ const fmtDate = t => new Date(t).toLocaleString('ar-OM',{day:'numeric',month:'sh
 /* ---------- التخزين ---------- */
 const PKEY = 'tech-expo:profile';
 const lkey = id => 'tech-expo:lesson:' + id;
-const read = (k, d) => { try{ return Object.assign(d, JSON.parse(localStorage.getItem(k)) || {}); }catch(e){ return d; } };
-const write = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
-let PR = read(PKEY, {name:'', cls:'', sound:true, device:''});
-if(!PR.device){ PR.device = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); write(PKEY, PR); }
+const API = window.TechAPI;
+const read = (k, d) => API.Vault.read(k,d);
+const write = (k, v) => API.Vault.write(k,v);
+let PR = {id:'',name:'',cls:'',sound:true,device:''}, studentSession = null;
 const saveProfile = () => write(PKEY, PR);
 const freshLesson = () => ({warm:false, done:{}, notes:{}, reflect:'', hist:[], sum:null});
-let S = L ? read(lkey(L.id), freshLesson()) : null;
+let S = L ? freshLesson() : null;
 
 /* ---------- الأنشطة والنقاط (أفضل نتيجة تُشتق من السجل) ---------- */
 function maxOf(g){
@@ -51,36 +51,42 @@ function save(){
   write(lkey(L.id), S);
 }
 function record(id, s, m, e){
-  const t = Date.now(); S.hist.push({a:id, t, s, m, e}); save();
+  const t = Date.now(), submissionId=API.id(); S.hist.push({a:id, t, s, m, e,submissionId}); save();
   const act = ACTS.find(x=>x.id===id), plain = h => { const d=document.createElement('div'); d.innerHTML=h; return d.textContent.trim(); };
-  queueSend({ts:t, name:PR.name, cls:PR.cls, device:PR.device, lesson:L.id, lessonTitle:L.title, act:id, actTitle:act.title,
-    attempt:attemptsOf(id).length, score:s, max:m, pct:pct(s,m), mistakes:e, acts:ACTS.length, misses:runLog.map(x=>plain(x.q)).slice(0,30), reflect:id==='final'?S.reflect.trim().slice(0,1000):''});
+  queueSend({submissionId,ts:t, name:PR.name, cls:PR.cls, device:PR.device, lesson:L.id, lessonTitle:L.title, act:id, actTitle:act.title,
+    attempt:attemptsOf(id).length, score:s, max:m, pct:pct(s,m), mistakes:e, acts:ACTS.length, misses:runLog.map(x=>plain(x.q).slice(0,500)).slice(0,30), reflect:id==='final'?S.reflect.trim().slice(0,1000):'',
+    evidence:JSON.stringify({activity:{title:act.title,task:id==='final'?{tf:L.final.tf,mcq:L.final.mcq,reflection:L.final.reflect}:L.pavilions.find(p=>p.id===id).games},
+      misses:runLog.map(x=>({q:plain(x.q),your:plain(x.your),correct:plain(x.correct)})),notes:S.notes})});
 }
 /* ---------- إرسال النتائج إلى جدول المعلمة (Google Sheets) ---------- */
 const OUTBOX = 'tech-expo:outbox';
 let sendState = 'off'; // off | sending | sent | queued
 function queueSend(row){
-  if(!P.sheetUrl) return;
+  if(!P.sheetUrl || !studentSession) return;
+  row.submissionId=row.submissionId||API.id(); row.studentId=PR.id;
   const q = read(OUTBOX, {items:[]}); q.items.push(row); write(OUTBOX, q); flush();
 }
 let flushing = null, flushAgain = false;
 function flush(){ // إرسال واحد في كل مرة لمنع تكرار الصفوف
-  if(!P.sheetUrl) return Promise.resolve();
+  if(!P.sheetUrl || !studentSession) return Promise.resolve();
   if(flushing){ flushAgain = true; return flushing; }
   const q = read(OUTBOX, {items:[]});
   if(!q.items.length) return Promise.resolve();
   sendState = 'sending';
-  return flushing = Promise.all(q.items.map(row => fetch(P.sheetUrl, {method:'POST', mode:'no-cors', keepalive:true, headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(row)})
-    .then(()=>row.ts+'|'+row.act, ()=>null)))
+  return flushing = API.Vault.saved().then(()=>Promise.all(q.items.filter(row=>row.studentId===PR.id).map(row =>
+    API.request('submit',{token:studentSession.token,row})
+      .then(ack=>ack.submissionId===row.submissionId?row.submissionId:null, error=>{ if(error.code==='auth') sendState='auth'; return null; }))))
   .then(okIds => {
     const done = new Set(okIds.filter(Boolean)), cur = read(OUTBOX, {items:[]});
-    cur.items = cur.items.filter(r => !done.has(r.ts+'|'+r.act)); write(OUTBOX, cur);
-    sendState = cur.items.length ? 'queued' : 'sent'; syncNote();
-  }).finally(() => { flushing = null; if(flushAgain){ flushAgain = false; flush(); } });
+    cur.items = cur.items.filter(r => !done.has(r.submissionId)); write(OUTBOX, cur);
+    if(sendState!=='auth') sendState = cur.items.length ? 'queued' : 'sent'; syncNote();
+    return API.Vault.saved();
+  }).catch(()=>{sendState='queued';syncNote();})
+  .finally(() => { flushing = null; if(flushAgain){ flushAgain = false; flush(); } });
 }
 function syncNote(){
   const el = $('#syncNote'); if(!el || !P.sheetUrl) return;
-  el.innerHTML = sendState==='sent' ? '☁️ وصلت نتيجتكِ إلى معلمتكِ ✅' : sendState==='queued' ? '📴 لا يوجد اتصال — ستُرسل نتيجتكِ إلى معلمتكِ تلقائيًا عند عودة الإنترنت' : '☁️ جارٍ إرسال نتيجتكِ إلى معلمتكِ…';
+  el.textContent = sendState==='sent' ? '☁️ تم تأكيد حفظ نتيجتكِ لدى معلمتكِ ✅' : sendState==='auth' ? '🔒 انتهت الجلسة. سجّلي الدخول مجددًا؛ محاولتكِ محفوظة في الانتظار.' : sendState==='queued' ? '⏳ لم يتأكد الحفظ بعد. المحاولة في الانتظار؛ أبقي الصفحة مفتوحة أو عودي بحسابكِ لإعادة الإرسال.' : '☁️ جارٍ إرسال نتيجتكِ إلى معلمتكِ…';
 }
 addEventListener('online', flush);
 function addPts(n){ runPts += n; refreshHeader(); }
@@ -131,7 +137,8 @@ function shell(){
       <span class="mark"><img src="${ASSETS}logo-icon.svg" alt="شعار مبدعة التقنية"></span>
       <span style="min-width:0"><b>${L?esc(L.expo):P.name}</b><small>${L?`${P.name} • ${esc(L.grade)}`:esc(P.school)}</small></span>
     </a>${lessonBar}
-    <button class="iconbtn" id="sndBtn" aria-label="تشغيل/إيقاف الصوت">🔊</button></div>`;
+    <div class="row"><button class="iconbtn" id="sndBtn" aria-label="تشغيل/إيقاف الصوت">🔊</button><button class="btn ghost sm" id="switchUser">خروج / تغيير الطالبة</button></div></div>`;
+  $('#switchUser').onclick = signOut;
   $('#sndBtn').onclick = () => { PR.sound=!PR.sound; saveProfile(); refreshHeader(); tone('tap'); };
   $('#ftr').innerHTML = `${L?`${esc(L.subject)} • ${esc(L.grade)} • ${esc(L.unit)} — ${esc(L.subtitle)}<br>`:''}${esc(P.school)} • إعداد: <b>${esc(P.teacher)}</b> • <a href="${L?'../':''}teacher/" class="tlink">بوابة المعلمة</a>`;
   $('#guideBtn').innerHTML = `${ROBOT}<span>كيف أستخدم الصفحة؟</span>`;
@@ -184,14 +191,12 @@ function library(){
     <h2 class="sectionT" style="font-size:22px">📚 الدروس المتاحة</h2>
     <div class="lessons">${cards}</div>
   </section>`, '#14b8a6', 'library');
-  $('#nm').oninput = e => { PR.name = e.target.value.trim(); saveProfile(); };
-  $('#cls').oninput = e => { PR.cls = e.target.value.trim(); saveProfile(); };
 }
 function idFields(label){
   return `<div class="idRow"><div class="field"><label for="nm">${label}</label>
-      <input id="nm" maxlength="60" placeholder="مثال: مريم بنت سالم الحارثية" value="${esc(PR.name)}" autocomplete="name"></div>
+      <input id="nm" readonly value="${esc(PR.name)}" autocomplete="off"></div>
     <div class="field"><label for="cls">الصف / الشعبة:</label>
-      <input id="cls" maxlength="12" list="clsList" placeholder="مثال: 12/3" value="${esc(PR.cls)}"><datalist id="clsList">${(P.classes||[]).map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div></div>
+      <input id="cls" readonly value="${esc(PR.cls)}"></div></div>
     ${P.sheetUrl?'<p class="privacy">🔒 تُرسل نتائج الأنشطة (الاسم، والصف، والدرجات، وإجابة سؤال التأمل، وفتح الشهادة) إلى معلمتكِ فقط لمتابعة تقدّمكِ.</p>':''}`;
 }
 
@@ -538,7 +543,7 @@ const ENGINES = {
   discuss(g, el, next, label){
     el.innerHTML = `${gHead(g,label,'نقاش')}
       <div class="discuss"><h4>${g.q}</h4><p class="muted" style="font-size:14px">ناقشي الفكرة مع زميلاتكِ، ثم اكتبي خلاصة رأيكِ (اختياري).</p>
-      <textarea id="ta" placeholder="اكتبي أفكاركِ هنا…">${esc(S.notes[g.id]||'')}</textarea></div>
+      <textarea id="ta" maxlength="1000" placeholder="اكتبي أفكاركِ هنا…">${esc(S.notes[g.id]||'')}</textarea></div>
       <div class="gameBar"><span class="muted">💾 يُحفظ ما تكتبينه تلقائيًا على جهازكِ</span><button class="btn" id="nx">متابعة ←</button></div>`;
     $('#ta').oninput=e=>{ S.notes[g.id]=e.target.value; save(); };
     $('#nx').onclick=()=>{ tone('tap'); next(); };
@@ -640,10 +645,9 @@ function history(){
     </div>
     <div class="hActs">${acts}</div>
     <div class="spacer"></div>
-    <div class="row c"><button class="btn ghost sm" id="resetBtn">🗑️ مسح سجلّي في هذا الدرس</button></div>
+    <p class="muted center">تُحفظ جميع المحاولات للمراجعة لاحقًا، بما فيها المحاولات المعتمدة.</p>
   </section>`, L.color, 'history');
   bindMap();
-  $('#resetBtn').onclick = () => { if(!confirm('هل تريدين مسح كل محاولاتكِ وتقدّمكِ في هذا الدرس؟')) return; S=freshLesson(); save(); welcome(); };
   $$('.bar').forEach(g=>{
     g.addEventListener('pointerenter', e=>showTip(g.dataset.tip, e)); g.addEventListener('pointermove', e=>showTip(g.dataset.tip, e));
     g.addEventListener('pointerleave', hideTip); g.addEventListener('focus', ()=>{ const r=g.getBoundingClientRect(); showTip(g.dataset.tip,{clientX:r.left+r.width/2,clientY:r.top}); });
@@ -748,10 +752,56 @@ function stopTour(){
   const g=$('#guideBtn'); if(g) g.classList.remove('busy');
 }
 
-/* ---------- البداية ---------- */
-shell();
-flush();
-if(!L) library();
-else (PR.name && S.warm) ? goHub() : welcome();
+/* ---------- دخول فردي؛ تبقى المحاولات السابقة في الخادم والخزنة المشفّرة ---------- */
+function studentLogin(message=''){
+  $('#hdr').textContent=''; $('#ftr').textContent='';
+  $('#app').innerHTML=`<section class="panel center" style="max-width:520px;margin:30px auto"><h1>دخول الطالبة</h1>
+    <p class="muted">استخدمي معرّفكِ ورمز الدخول الخاص بكِ من المعلمة.</p>
+    <form id="studentLogin"><div class="field"><label for="studentId">معرّف الطالبة</label><input id="studentId" required maxlength="60" autocomplete="username" dir="ltr"></div>
+    <div class="field"><label for="studentCode">رمز الدخول</label><input id="studentCode" type="password" required maxlength="128" autocomplete="current-password" dir="ltr"></div>
+    <button class="btn" id="studentGo">دخول</button><p id="loginError" role="alert">${esc(message)}</p></form>
+    <a class="btn ghost sm" href="${L?'../':''}teacher/">بوابة المعلمة</a></section>`;
+  $('#studentLogin').onsubmit=async e=>{
+    e.preventDefault(); const button=$('#studentGo');button.disabled=true;
+    try {
+      const d=await API.request('studentLogin',{studentId:$('#studentId').value.trim(),code:$('#studentCode').value.trim()});
+      $('#studentCode').value=''; API.saveSession(d); await boot();
+    } catch(error) {$('#loginError').textContent=error.message;button.disabled=false;}
+  };
+}
+async function boot(){
+  studentSession=API.session(); if(!studentSession) return studentLogin();
+  try {
+    const data=await API.request('studentResume',{token:studentSession.token});
+    await API.Vault.open(data.student.id,data.vaultKey);
+    PR={...read(PKEY,{sound:true,device:API.id()}),...data.student}; saveProfile();
+    // Restore this student's submitted attempts on a new browser; never infer identity from a name.
+    for(const entry of P.lessons){
+      const st=read(lkey(entry.id),freshLesson());
+      const submitted=data.rows.filter(r=>r.lesson===entry.id&&!String(r.act).startsWith('cert-'));
+      for(const row of submitted){
+        if(!st.hist.some(h=>h.submissionId===row.submissionId)) st.hist.push({a:row.act,t:row.t,s:row.score,m:row.max,e:row.mistakes,submissionId:row.submissionId});
+        st.done[row.act]=true;st.warm=true;
+      }
+      if(!st.reflect) st.reflect=submitted.filter(r=>r.act==='final'&&r.reflect).sort((a,b)=>a.t-b.t).at(-1)?.reflect||'';
+      const meta=data.lessonTotals[entry.id],best={};
+      st.hist.forEach(h=>{best[h.a]=Math.max(best[h.a]||0,h.s);});
+      if(st.hist.length) st.sum={done:Object.keys(st.done).length,total:meta.count,best:pct(Object.values(best).reduce((n,s)=>n+s,0),meta.max),attempts:st.hist.length};
+      write(lkey(entry.id),st);
+    }
+    S=L?read(lkey(L.id),freshLesson()):null;
+    shell();flush();if(!L) library();else S.warm?goHub():welcome();
+  } catch(error){
+    studentSession=null;API.clearSession();studentLogin(error.message);
+  }
+}
+async function signOut(){
+  try {if(flushing) await flushing; await API.Vault.saved();} catch {toast('تعذّر حفظ المحاولات محليًا. أبقي الصفحة مفتوحة وأعيدي المحاولة.');return;}
+  const token=studentSession&&studentSession.token;
+  API.clearSession();studentSession=null;PR={id:'',name:'',cls:'',sound:true,device:''};S=L?freshLesson():null;
+  studentLogin('تم الخروج. تبقى محاولاتكِ السابقة محفوظة للمراجعة.');
+  if(token) API.request('logout',{token}).catch(()=>{});
+}
+boot();
 window.TechExpo = {state:()=>S, profile:()=>PR, goHub, openPav, openFinal, showCert, history, startTour, stopTour, total, MAX, LESSON:L};
 })();
