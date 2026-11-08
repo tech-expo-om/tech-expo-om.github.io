@@ -12,6 +12,12 @@ const fmt = t => new Date(t).toLocaleString('ar-OM',{day:'numeric',month:'short'
 const PINKEY = 'tech-expo:teacher-pin';
 // Google Sheets يحوّل الصف «12/8» إلى تاريخ في الصفوف القديمة؛ نعيده إلى شكله الأصلي
 const fixCls = c => /^\d{4}-\d\d-\d\dT/.test(String(c)) ? (d => `${d.getMonth()+1}/${d.getDate()}`)(new Date(c)) : c;
+const cleanRow = r => {
+  const safe={...r,cls:fixCls(r.cls)};
+  for(const k of ['t','attempt','score','max','pct','mistakes','acts']) safe[k]=Number.isFinite(Number(r[k]))?Number(r[k]):0;
+  safe.acts=Math.max(0,Math.min(100,safe.acts));safe.misses=Array.isArray(r.misses)?r.misses:[];
+  return safe;
+};
 let ROWS = [], F = {lesson:'', cls:'', q:''}, SORT = {k:'overall', dir:-1}, OPEN = null;
 
 $('#hdr').innerHTML = `<div class="bar"><a class="brand" href="../"><span class="mark"><img src="../assets/logo-icon.svg" alt="شعار مبدعة التقنية"></span>
@@ -66,7 +72,7 @@ function load(pin){
   fetch(P.sheetUrl + (P.sheetUrl.includes('?')?'&':'?') + 'pin=' + encodeURIComponent(pin))
     .then(r => r.json()).then(d => {
       if(!d.ok){ sessionStorage.removeItem(PINKEY); login(); $('#err').textContent='الرمز السري غير صحيح'; return; }
-      sessionStorage.setItem(PINKEY, pin); const seen = new Set(); ROWS = d.rows.map(r => Object.assign(r, {cls: fixCls(r.cls)})).filter(r => { const k=r.device+'|'+r.t+'|'+r.act; if(!r.name || seen.has(k)) return false; seen.add(k); return true; }); dashboard();
+      sessionStorage.setItem(PINKEY, pin); const seen = new Set(); ROWS = d.rows.map(cleanRow).filter(r => { const k=r.device+'|'+r.t+'|'+r.act; if(!r.name || seen.has(k)) return false; seen.add(k); return true; }); dashboard();
     }).catch(() => { render(`<section class="panel center"><p class="lead">تعذّر الاتصال بجدول النتائج. تأكّدي من الإنترنت ومن رابط Web app.</p><button class="btn" id="re">إعادة المحاولة</button></section>`); $('#re').onclick=()=>load(pin); });
 }
 
@@ -115,7 +121,7 @@ function dashboard(){
   const done = M.list.filter(s=>s.done>=M.nActs).length, weak = M.list.filter(s=>s.overall<60).length;
   const avg = M.list.length ? Math.round(M.list.reduce((t,s)=>t+s.overall,0)/M.list.length) : 0;
   const cell = v => v==null ? '<td class="hc empty">—</td>' : `<td class="hc" style="--v:${v}">${fp(v)}</td>`;
-  const th = (key, label) => `<th><button class="sortBtn" data-k="${key}">${label}${SORT.k===key?(SORT.dir>0?' ▲':' ▼'):''}</button></th>`;
+  const th = (key, label) => `<th><button class="sortBtn" data-k="${esc(key)}">${label}${SORT.k===key?(SORT.dir>0?' ▲':' ▼'):''}</button></th>`;
   const maxMiss = M.topMiss.length ? M.topMiss[0][1] : 1;
   $('#app').innerHTML = `<div class="screen"><section class="panel">
     <div class="hubHead"><div><span class="kicker">👩‍🏫 لوحة المتابعة</span><h2 style="font-size:clamp(20px,4vw,30px);margin-top:6px">تقدّم الطالبات</h2>
@@ -198,10 +204,10 @@ function certScreen(s, M){
 }
 function exportCSV(rows){
   const head = ['التاريخ','الاسم','الصف','الدرس','النشاط','رقم المحاولة','النتيجة','الدرجة العظمى','النسبة','الأخطاء'];
-  const q = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+  const q = v => '"\t' + String(v==null?'':v).replace(/[\x00-\x1f\x7f]/g,' ').replace(/"/g,'""') + '"';
   const lines = [head.map(q).join(',')].concat(rows.map(r => [new Date(r.t).toLocaleString('ar-OM'), r.name, r.cls, r.lessonTitle, r.actTitle, r.attempt, r.score, r.max, r.pct, r.mistakes].map(q).join(',')));
   const blob = new Blob(['﻿' + lines.join('\n')], {type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `نتائج-${F.lesson}${F.cls?'-'+F.cls.replace('/','_'):''}.csv`; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `نتائج-${F.lesson}${F.cls?'-'+F.cls.replace('/','_'):''}.csv`; a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 login();
