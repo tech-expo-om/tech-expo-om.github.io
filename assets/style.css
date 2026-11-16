@@ -425,10 +425,13 @@ pre.code{max-height:320px;overflow:auto;background:#050914;border:1px solid var(
 #pin{width:100%;text-align:center;font-size:17px}
 .tblWrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table.dash{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
-table.dash th{position:sticky;top:0;background:#111a38;font-size:12.5px;color:var(--muted);text-align:right;padding:0;border-bottom:1px solid var(--line);white-space:nowrap}
-.sortBtn{width:100%;text-align:right;padding:10px;font-weight:800;color:inherit}
+table.dash th{position:sticky;top:0;background:#111a38;font-size:12px;color:var(--muted);text-align:center;padding:0;border-bottom:1px solid var(--line);vertical-align:middle}
+.sortBtn{width:100%;text-align:inherit;padding:8px 5px;font-weight:800;color:inherit;line-height:1.35}
+table.dash th:first-child{text-align:right}
 .sortBtn:hover{color:var(--text)}
-table.dash td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.dash td{padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:center;font-size:13.5px}
+table.dash td:first-child{white-space:normal;text-align:right;min-width:130px}
+table.dash td:last-child{white-space:normal;font-size:12.5px}
 .srow{cursor:pointer}
 .srow:hover td:not(.hc){background:rgba(255,255,255,.04)}
 .srow:hover td.hc{filter:brightness(1.12)}
