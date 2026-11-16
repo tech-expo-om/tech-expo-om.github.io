@@ -248,6 +248,8 @@ function report(title, meta, stats, body){
   </section>
   <div class="row c noPrint" style="margin-top:14px"><button class="btn gold" id="printBtn">🖨️ طباعة / حفظ PDF</button><button class="btn ghost" id="backBtn">العودة إلى اللوحة ←</button></div>`);
   scrollTo(0,0); $('#printBtn').onclick = () => window.print(); $('#backBtn').onclick = dashboard;
+  const fit = () => { const r = $('.rep'); if(r) r.style.zoom = Math.min(1, r.parentElement.clientWidth / 1060); }; // يلائم التقرير عرض الشاشة
+  fit(); window.onresize = fit;
 }
 function classReport(M){
   const n = M.list.length, avg = n ? Math.round(M.list.reduce((t,s)=>t+s.overall,0)/n) : 0;
