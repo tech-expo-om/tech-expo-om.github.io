@@ -445,3 +445,32 @@ table.mini th{color:var(--muted);font-weight:700}
 .mb{height:10px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden}
 .mb i{display:block;height:100%;background:#fb7185;border-radius:6px}
 .mi b{text-align:center}
+
+/* ---------- teacher PDF reports ---------- */
+.rep{background:#fff;color:#1e293b;border-radius:16px;padding:22px;font-size:13.5px;line-height:1.6;overflow-x:auto}
+.repHead{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid #0f766e}
+.repHead img{width:44px;height:44px}
+.repHead div{flex:1}
+.repHead b{display:block;font-family:'Cairo','Tajawal',sans-serif;font-weight:900;font-size:17px;color:#0f766e;line-height:1.3}
+.repHead small,.repHead span{font-size:12.5px;color:#475569}
+.rep h1{font-size:21px;color:#0f172a;margin:12px 0 4px}
+.rep h2{font-size:15.5px;color:#0f766e;margin:16px 0 6px;break-after:avoid}
+.repMeta{display:flex;flex-wrap:wrap;gap:4px 22px;color:#475569}
+.repMeta b{color:#0f172a}
+.repStats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.repStats div{border:1px solid #99f6e4;background:#f0fdfa;border-radius:10px;padding:7px 10px;break-inside:avoid}
+.repStats small{display:block;font-size:11.5px;color:#475569;font-weight:700}
+.repStats b{font-family:'Cairo','Tajawal',sans-serif;font-size:17px;color:#0f172a}
+table.rt{width:100%;border-collapse:collapse;font-size:12.5px}
+table.rt th{background:#0f766e;color:#fff;font-weight:700;font-size:11.5px;padding:6px 5px;border:1px solid #0f766e;text-align:center}
+table.rt td{padding:5px 7px;border:1px solid #cbd5e1;text-align:right}
+table.rt tbody tr:nth-child(even) td{background:#f8fafc}
+table.rt td.c{text-align:center;white-space:nowrap}
+table.rt td.lo,table.rt tbody tr:nth-child(even) td.lo{background:#fee2e2;color:#991b1b;font-weight:700}
+table.rt td.hi,table.rt tbody tr:nth-child(even) td.hi{background:#dcfce7;color:#166534;font-weight:700}
+table.rt tr{break-inside:avoid}
+.repList{margin:0 20px 0 0}
+.repNote{white-space:pre-wrap;border:1px solid #cbd5e1;border-radius:10px;padding:8px 12px;background:#f8fafc}
+.repFoot{margin-top:14px;padding-top:8px;border-top:1px solid #cbd5e1;font-size:11.5px;color:#475569}
+@media(max-width:640px){.repStats{grid-template-columns:repeat(2,1fr)}}
+@media print{.rep{padding:0;border-radius:0;overflow:visible}}

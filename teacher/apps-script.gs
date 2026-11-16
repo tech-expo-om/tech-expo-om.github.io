@@ -35,6 +35,7 @@ const num_ = v => (isFinite(Number(v)) ? Number(v) : 0);
 // تستقبل محاولة واحدة من صفحة الدرس
 function doPost(e) {
   const d = JSON.parse(e.postData.contents);
+  if (d.action === 'deleteStudent') return deleteStudent_(d);
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -59,7 +60,27 @@ function doGet(e) {
     attempt: r[7], score: r[8], max: r[9], pct: r[10], mistakes: r[11], acts: r[12],
     misses: r[13] ? String(r[13]).split(' | ') : [], device: r[14], reflect: String(r[15] || '')
   }));
-  return json_({ ok: true, rows: rows });
+  return json_({ ok: true, rows: rows, canDelete: true });
+}
+
+// تحذف نهائيًا كل صفوف طالبة واحدة (بطلب من لوحة المعلمة) — تتطلب الرمز السري
+function deleteStudent_(d) {
+  if (TEACHER_PIN === 'غيّريني-1234' || String(d.pin || '') !== TEACHER_PIN) return json_({ ok: false, error: 'pin' });
+  const name = String(d.name || '').trim(), times = {};
+  (Array.isArray(d.times) ? d.times : []).forEach(t => { times[Number(t)] = true; });
+  if (!name) return json_({ ok: false, error: 'name' });
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  let deleted = 0;
+  try {
+    const sh = sheet_(), values = sh.getDataRange().getValues();
+    for (let i = values.length - 1; i >= 1; i--) { // من الأسفل حتى لا تتغيّر أرقام الصفوف
+      if (String(values[i][1]).trim() === name && times[new Date(values[i][0]).getTime() || 0]) { sh.deleteRow(i + 1); deleted++; }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  return json_({ ok: true, deleted: deleted });
 }
 
 function json_(o) {

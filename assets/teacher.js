@@ -18,7 +18,9 @@ const cleanRow = r => {
   safe.acts=Math.max(0,Math.min(100,safe.acts));safe.misses=Array.isArray(r.misses)?r.misses:[];
   return safe;
 };
-let ROWS = [], F = {lesson:'', cls:'', q:''}, SORT = {k:'overall', dir:-1}, OPEN = null;
+let ROWS = [], F = {lesson:'', cls:'', q:''}, SORT = {k:'overall', dir:-1}, OPEN = null, CAN_DELETE = false, DELCHECK = null;
+const skey = r => String(r.name).trim()+'|'+String(r.cls).trim();
+const TITLE = document.title;
 
 $('#hdr').innerHTML = `<div class="bar"><a class="brand" href="../"><span class="mark"><img src="../assets/logo-icon.svg" alt="شعار مبدعة التقنية"></span>
   <span style="min-width:0"><b>بوابة المعلمة</b><small>${esc(P.name)} • ${esc(P.school)}</small></span></a>
@@ -45,7 +47,7 @@ function setup(){
     </ol>
     <div class="row" style="margin:14px 0"><button class="btn" id="copyCode">📋 نسخ الكود</button><span class="muted" id="copyMsg"></span></div>
     <pre class="code" id="code" dir="ltr">جارٍ تحميل الكود…</pre>
-    <div class="note"><b>🔒 الخصوصية:</b> تُرسل المنصة اسم الطالبة وصفّها ونتائج الأنشطة وإجابة سؤال التأمل، ووقت فتحها للشهادة أو طباعتها فقط. لا يستطيع أحد قراءة الجدول من هذه الصفحة دون الرمز السري. وإذا غيّرتِ الكود لاحقًا فاختاري <b>Deploy ← Manage deployments ← Edit ← New version</b> ليبقى الرابط نفسه.</div>
+    <div class="note"><b>🔒 الخصوصية:</b> تُرسل المنصة اسم الطالبة وصفّها ونتائج الأنشطة وإجابة سؤال التأمل، ووقت فتحها للشهادة أو طباعتها فقط. لا يستطيع أحد قراءة الجدول من هذه الصفحة دون الرمز السري. وإذا غيّرتِ الكود لاحقًا فاكتبي رمزكِ السري نفسه في <code>TEACHER_PIN</code> ثم اختاري <b>Deploy ← Manage deployments ← Edit ← New version</b> ليبقى الرابط نفسه.</div>
     ${P.sheetUrl?'<div class="spacer"></div><div class="row c"><button class="btn gold" id="toDash">العودة إلى اللوحة ←</button></div>':''}
   </section>`);
   fetch('apps-script.gs').then(r=>r.text()).then(t=>{ $('#code').textContent=t; });
@@ -60,7 +62,7 @@ function login(){
   if(saved) return load(saved);
   render(`<section class="panel center" style="max-width:520px;margin:0 auto">
     <div class="badgeBig">👩‍🏫</div><h2 style="font-size:26px">بوابة المعلمة</h2>
-    <p class="muted">أدخلي الرمز السري الذي وضعتِه في Apps Script.</p>
+    <p class="muted">أدخلي الرمز السري.</p>
     <div class="field"><input id="pin" type="password" placeholder="الرمز السري" autocomplete="current-password"></div>
     <button class="btn" id="go">دخول 🔓</button><p class="gmsg no" id="err"></p></section>`);
   const go = () => load($('#pin').value.trim());
@@ -72,7 +74,8 @@ function load(pin){
   fetch(P.sheetUrl + (P.sheetUrl.includes('?')?'&':'?') + 'pin=' + encodeURIComponent(pin))
     .then(r => r.json()).then(d => {
       if(!d.ok){ sessionStorage.removeItem(PINKEY); login(); $('#err').textContent='الرمز السري غير صحيح'; return; }
-      sessionStorage.setItem(PINKEY, pin); const seen = new Set(); ROWS = d.rows.map(cleanRow).filter(r => { const k=r.device+'|'+r.t+'|'+r.act; if(!r.name || seen.has(k)) return false; seen.add(k); return true; }); dashboard();
+      sessionStorage.setItem(PINKEY, pin); CAN_DELETE = !!d.canDelete; const seen = new Set(); ROWS = d.rows.map(cleanRow).filter(r => { const k=r.device+'|'+r.t+'|'+r.act; if(!r.name || seen.has(k)) return false; seen.add(k); return true; }); dashboard();
+      if(DELCHECK){ const k = DELCHECK; DELCHECK = null; if(ROWS.some(r => skey(r)===k)) alert('تعذّر حذف الطالبة. تأكّدي من تحديث الكود في جدول Google ومن الرمز السري، ثم أعيدي المحاولة.'); }
     }).catch(() => { render(`<section class="panel center"><p class="lead">تعذّر الاتصال بجدول النتائج. تأكّدي من الإنترنت ومن رابط Web app.</p><button class="btn" id="re">إعادة المحاولة</button></section>`); $('#re').onclick=()=>load(pin); });
 }
 
@@ -110,6 +113,7 @@ function model(){
 
 /* ---------- اللوحة ---------- */
 function dashboard(){
+  document.title = TITLE;
   const lessons = [...new Map(ROWS.map(r=>[r.lesson, r.lessonTitle])).entries()];
   P.lessons.forEach(l => { if(!lessons.find(x=>x[0]===l.id)) lessons.push([l.id, l.title]); });
   if(!F.lesson) F.lesson = (lessons[0]||[''])[0];
@@ -126,7 +130,7 @@ function dashboard(){
   $('#app').innerHTML = `<div class="screen"><section class="panel">
     <div class="hubHead"><div><span class="kicker">👩‍🏫 لوحة المتابعة</span><h2 style="font-size:clamp(20px,4vw,30px);margin-top:6px">تقدّم الطالبات</h2>
       <p class="muted">آخر تحديث: ${fmt(Date.now())} — تُحتسب أفضل نتيجة لكل نشاط.</p></div>
-      <div class="row"><button class="btn ghost sm" id="refresh">🔄 تحديث</button><button class="btn ghost sm" id="csv">⬇️ تصدير CSV</button><button class="btn ghost sm" id="logout">🔒 خروج</button></div></div>
+      <div class="row"><button class="btn ghost sm" id="refresh">🔄 تحديث</button><button class="btn ghost sm" id="pdf">📄 تقرير PDF</button><button class="btn ghost sm" id="csv">⬇️ تصدير CSV</button><button class="btn ghost sm" id="logout">🔒 خروج</button></div></div>
     <div class="filters">
       <label>الدرس <select id="fLesson">${lessons.map(l=>`<option value="${esc(l[0])}" ${l[0]===F.lesson?'selected':''}>${esc(l[1])}</option>`).join('')}</select></label>
       <label>الصف <select id="fCls"><option value="">كل الشعب</option>${classes.map(c=>`<option ${c===F.cls?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
@@ -162,6 +166,9 @@ function dashboard(){
   $('#logout').onclick = () => { sessionStorage.removeItem(PINKEY); ROWS=[]; login(); };
   $('#csv').onclick = () => exportCSV(M.rows);
   $$('.certView').forEach(b => b.onclick = () => certScreen(M.list[+b.dataset.i], M));
+  $('#pdf').onclick = () => classReport(M);
+  $$('.stuPdf').forEach(b => b.onclick = () => studentReport(M.list[+b.dataset.i], M));
+  $$('.stuDel').forEach(b => b.onclick = () => removeStudent(M.list[+b.dataset.i]));
 }
 const CERT = ['—', '📜 حصلت عليها', '👁️ فتحتها', '🖨️ طبعتها'];
 function detail(s, acts, i){
@@ -172,7 +179,9 @@ function detail(s, acts, i){
       <button class="btn gold sm certView" data-i="${i}">عرض الشهادة 📜</button>`
     : `<div class="empty">لم تصل نتيجة التقويم الختامي بعد — تُبنى الشهادة من الأنشطة التي أنجزتها.</div>
       <button class="btn gold sm certView" data-i="${i}">إنشاء الشهادة 📜</button>`}</div>`;
-  return `<div class="hActs">${cert}${acts.map(a=>{ const h=s.hist.filter(r=>r.act===a.id).sort((x,y)=>x.t-y.t);
+  const tools = `<div class="row" style="margin-bottom:12px"><button class="btn ghost sm stuPdf" data-i="${i}">📄 تقرير الطالبة PDF</button>
+    ${CAN_DELETE ? `<button class="btn ghost sm stuDel" data-i="${i}">🗑️ حذف الطالبة نهائيًا</button>` : `<span class="muted" style="font-size:12.5px">لتفعيل حذف الطالبات حدّثي الكود في جدول Google من «⚙️ الإعداد».</span>`}</div>`;
+  return `${tools}<div class="hActs">${cert}${acts.map(a=>{ const h=s.hist.filter(r=>r.act===a.id).sort((x,y)=>x.t-y.t);
     if(!h.length) return `<div class="hAct" style="--c:#475569"><h4>${esc(a.title)}</h4><div class="empty">لم تحاول بعد</div></div>`;
     return `<div class="hAct" style="--c:#14b8a6"><div class="hh"><h4>${esc(a.title)}</h4><span class="status done">أفضل: ${fp(Math.max(...h.map(r=>r.pct)))}</span></div>
       <table class="mini"><thead><tr><th>#</th><th>التاريخ</th><th>النتيجة</th><th>الأخطاء</th></tr></thead><tbody>
@@ -210,5 +219,63 @@ function exportCSV(rows){
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `نتائج-${F.lesson}${F.cls?'-'+F.cls.replace('/','_'):''}.csv`; a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
-login();
-})();
+/* ---------- حذف طالبة نهائيًا من جدول النتائج ---------- */
+function removeStudent(s){
+  const key = s.name+'|'+s.cls, mine = ROWS.filter(r => skey(r)===key), pin = sessionStorage.getItem(PINKEY);
+  if(!confirm(`حذف الطالبة «${s.name}» (${s.cls}) نهائيًا؟\nستُحذف كل سجلاتها (${mine.length}) من جدول النتائج في جميع الدروس، ولا يمكن التراجع.`)) return;
+  render(`<section class="panel center"><p class="lead">⏳ جارٍ الحذف…</p></section>`);
+  fetch(P.sheetUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'deleteStudent', pin, name:s.name, times:[...new Set(mine.map(r=>r.t))]})})
+    .then(() => { DELCHECK = key; OPEN = null; load(pin); }, () => { dashboard(); alert('تعذّر الاتصال بجدول النتائج. لم يُحذف شيء.'); });
+}
+
+/* ---------- تقارير PDF (تُفتح كصفحة جاهزة للطباعة / الحفظ PDF) ---------- */
+const CERT_T = ['—', 'حصلت عليها', 'فتحتها', 'طبعتها'];
+const lr = (x, y) => '⁦' + x + ' / ' + y + '⁩'; // «46 / 80» بترتيب ثابت داخل النص العربي
+const day = t => new Date(t).toLocaleDateString('ar-OM',{day:'numeric',month:'long',year:'numeric'});
+const lessonTitle = () => (P.lessons.find(l=>l.id===F.lesson)||{}).title || (ROWS.find(r=>r.lesson===F.lesson)||{}).lessonTitle || F.lesson;
+const pc = v => v==null ? '<td class="c">—</td>' : `<td class="c ${v<60?'lo':v>=85?'hi':''}">${fp(v)}</td>`;
+function report(title, meta, stats, body){
+  document.title = title;
+  render(`<section class="rep">
+    <div class="repHead"><img src="../assets/logo-icon.svg" alt=""><div><b>${esc(P.name)}</b><small>${esc(P.school)}</small></div><span>${day(Date.now())}</span></div>
+    <h1>${esc(title)}</h1>
+    <div class="repMeta">${meta.map(([k,v])=>`<span>${k}: <b>${esc(v)}</b></span>`).join('')}</div>
+    <div class="repStats">${stats.map(([k,v])=>`<div><small>${k}</small><b>${v}</b></div>`).join('')}</div>
+    ${body}
+    <div class="repFoot">إعداد: ${esc(P.teacher)} • تُحتسب أفضل نتيجة لكل نشاط، و«متوسط النتائج» من الأنشطة التي حاولتها الطالبة.</div>
+  </section>
+  <div class="row c noPrint" style="margin-top:14px"><button class="btn gold" id="printBtn">🖨️ طباعة / حفظ PDF</button><button class="btn ghost" id="backBtn">العودة إلى اللوحة ←</button></div>`);
+  scrollTo(0,0); $('#printBtn').onclick = () => window.print(); $('#backBtn').onclick = dashboard;
+}
+function classReport(M){
+  const n = M.list.length, avg = n ? Math.round(M.list.reduce((t,s)=>t+s.overall,0)/n) : 0;
+  report(`تقرير نتائج الصف — ${lessonTitle()}`,
+    [['الدرس', lessonTitle()], ['الصف', F.cls||'كل الشعب']].concat(F.q?[['بحث', F.q]]:[]),
+    [['الطالبات', n], ['أكملن الدرس', lr(M.list.filter(s=>s.done>=M.nActs).length, n)], ['متوسط نتائج الصف', fp(avg)], ['يحتجن دعمًا (أقل من 60%)', M.list.filter(s=>s.overall<60).length], ['إجمالي المحاولات', M.rows.length]],
+    `<h2>نتائج الطالبات</h2>
+    ${n ? `<table class="rt"><thead><tr><th>م</th><th>الطالبة</th><th>الصف</th><th>الإنجاز</th><th>متوسط النتائج</th>${M.acts.map(a=>`<th>${esc(a.title)}</th>`).join('')}<th>الشهادة</th><th>المحاولات</th><th>آخر نشاط</th></tr></thead>
+      <tbody>${M.list.map((s,i)=>`<tr><td class="c">${i+1}</td><td><b>${esc(s.name)}</b></td><td class="c">${esc(s.cls)}</td><td class="c">${lr(s.done, M.nActs)}</td>${pc(s.overall)}
+        ${M.acts.map(a=>pc(s.best[a.id])).join('')}<td class="c">${CERT_T[s.cert]}</td><td class="c">${s.attempts}</td><td class="c">${fmt(s.last)}</td></tr>`).join('')}</tbody></table>` : '<p>لا توجد نتائج لهذا الدرس.</p>'}
+    <h2>أكثر الأسئلة خطأً</h2>
+    ${M.topMiss.length ? `<table class="rt"><thead><tr><th>م</th><th>السؤال</th><th>عدد مرات الخطأ</th></tr></thead><tbody>${M.topMiss.map(([q,c],i)=>`<tr><td class="c">${i+1}</td><td>${esc(q)}</td><td class="c">${c}</td></tr>`).join('')}</tbody></table>` : '<p>لا توجد أخطاء مسجّلة.</p>'}`);
+}
+function studentReport(s, M){
+  const hist = [...s.hist].sort((a,b)=>a.t-b.t), misses = [...new Set(hist.flatMap(r=>r.misses))].filter(Boolean), refl = hist.filter(r=>r.act==='final' && r.reflect);
+  report(`تقرير الطالبة — ${s.name}`,
+    [['الطالبة', s.name], ['الصف', s.cls], ['الدرس', lessonTitle()]],
+    [['الإنجاز', lr(s.done, M.nActs)], ['متوسط النتائج', fp(s.overall)], ['المحاولات', s.attempts], ['الشهادة', CERT_T[s.cert]], ['آخر نشاط', fmt(s.last)]],
+    `<h2>ملخّص الأنشطة</h2>
+    <table class="rt"><thead><tr><th>النشاط</th><th>أفضل نتيجة</th><th>النسبة</th><th>عدد المحاولات</th><th>أول محاولة</th><th>آخر محاولة</th></tr></thead>
+      <tbody>${M.acts.map(a=>{ const h = hist.filter(r=>r.act===a.id);
+        if(!h.length) return `<tr><td><b>${esc(a.title)}</b></td><td class="c" colspan="5">لم تحاول بعد</td></tr>`;
+        const b = h.reduce((x,r)=>r.pct>x.pct?r:x);
+        return `<tr><td><b>${esc(a.title)}</b></td><td class="c">${lr(b.score, b.max)}</td>${pc(b.pct)}<td class="c">${h.length}</td><td class="c">${fmt(h[0].t)}</td><td class="c">${fmt(h.at(-1).t)}</td></tr>`; }).join('')}</tbody></table>
+    <h2>سجل المحاولات</h2>
+    ${hist.length ? `<table class="rt"><thead><tr><th>م</th><th>التاريخ</th><th>النشاط</th><th>رقم المحاولة</th><th>النتيجة</th><th>النسبة</th><th>الأخطاء</th></tr></thead>
+      <tbody>${hist.map((r,i)=>`<tr><td class="c">${i+1}</td><td class="c">${fmt(r.t)}</td><td>${esc(r.actTitle)}</td><td class="c">${r.attempt}</td><td class="c">${lr(r.score, r.max)}</td>${pc(r.pct)}<td class="c">${r.mistakes}</td></tr>`).join('')}</tbody></table>` : '<p>لا توجد محاولات مسجّلة.</p>'}
+    ${misses.length ? `<h2>الأسئلة التي أخطأت فيها</h2><ol class="repList">${misses.map(q=>`<li>${esc(q)}</li>`).join('')}</ol>` : ''}
+    ${refl.length ? `<h2>إجابة سؤال التأمل</h2><p class="repNote">${esc(refl.at(-1).reflect)}</p>` : ''}`);
+}
+
+login();})();
