@@ -150,7 +150,7 @@ function dashboard(){
         <td><b>${esc(s.name)}</b></td><td>${esc(s.cls)}</td><td>${s.done} / ${M.nActs}</td>
         <td class="hc strong" style="--v:${s.overall}">${fp(s.overall)}${s.overall<60?' ⚠️':''}</td>
         ${M.acts.map(a=>cell(s.best[a.id])).join('')}<td class="${s.cert?'':'muted'}">${CERT[s.cert]}</td><td>${s.attempts}</td><td class="muted">${fmt(s.last)}</td></tr>
-        ${OPEN===s.name+'|'+s.cls?`<tr class="detail"><td colspan="${7+M.acts.length}">${detail(s, M.acts, i)}</td></tr>`:''}`).join('')}</tbody>
+        ${OPEN===s.name+'|'+s.cls?`<tr class="detail"><td colspan="${7+M.acts.length}"><div class="detIn">${detail(s, M.acts, i)}</div></td></tr>`:''}`).join('')}</tbody>
     </table></div><p class="muted" style="font-size:12.5px;margin-top:6px">اضغطي على اسم الطالبة لعرض كل محاولاتها • اضغطي على عنوان العمود للترتيب • «متوسط النتائج» يُحسب من الأنشطة التي حاولتها الطالبة • ⚠️ = أقل من 60% • 📜 حصلت على الشهادة، 👁️ فتحتها، 🖨️ ضغطت «طباعة / حفظ PDF»</p>`
     : `<div class="empty">لا توجد نتائج بعد لهذا الدرس${F.cls?' في هذه الشعبة':''}. ستظهر هنا فور إنهاء الطالبات أول نشاط.</div>`}
     <h3 class="sectionT">❗ أكثر الأسئلة خطأً</h3>
