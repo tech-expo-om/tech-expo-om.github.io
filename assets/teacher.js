@@ -185,8 +185,8 @@ function detail(s, acts, i){
   return `${tools}<div class="hActs">${cert}${acts.map(a=>{ const h=s.hist.filter(r=>r.act===a.id).sort((x,y)=>x.t-y.t);
     if(!h.length) return `<div class="hAct" style="--c:#475569"><h4>${esc(a.title)}</h4><div class="empty">لم تحاول بعد</div></div>`;
     return `<div class="hAct" style="--c:#14b8a6"><div class="hh"><h4>${esc(a.title)}</h4><span class="status done">أفضل: ${fp(Math.max(...h.map(r=>r.pct)))}</span></div>
-      <table class="mini"><thead><tr><th>#</th><th>التاريخ</th><th>النتيجة</th><th>الأخطاء</th>${CAN_DELETE?'<th></th>':''}</tr></thead><tbody>
-      ${h.map((r,j)=>`<tr><td>${j+1}</td><td>${fmt(r.t)}</td><td>${r.score}/${r.max} (${fp(r.pct)})</td><td>${r.mistakes}</td>${CAN_DELETE?`<td><button class="attDel" data-i="${i}" data-act="${esc(r.act)}" data-t="${r.t}" title="حذف هذه المحاولة نهائيًا" aria-label="حذف هذه المحاولة نهائيًا">🗑️</button></td>`:''}</tr>`).join('')}</tbody></table>
+      <table class="mini"><thead><tr><th>#</th><th>التاريخ</th><th>النتيجة</th><th>الأخطاء</th>${CAN_DELETE?'<th>حذف</th>':''}</tr></thead><tbody>
+      ${h.map((r,j)=>`<tr><td>${j+1}</td><td>${fmt(r.t)}</td><td>${r.score}/${r.max} (${fp(r.pct)})</td><td>${r.mistakes}</td>${CAN_DELETE?`<td><button class="attDel" data-i="${i}" data-act="${esc(r.act)}" data-t="${r.t}" title="حذف هذه المحاولة نهائيًا" aria-label="حذف هذه المحاولة نهائيًا">🗑️ حذف</button></td>`:''}</tr>`).join('')}</tbody></table>
       ${h.some(r=>r.misses.length)?`<details class="tbl"><summary>الأسئلة التي أخطأت فيها</summary><ul class="ml">${[...new Set(h.flatMap(r=>r.misses))].map(q=>`<li>${esc(q)}</li>`).join('')}</ul></details>`:''}
     </div>`; }).join('')}</div>`;
 }

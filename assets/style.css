@@ -442,8 +442,8 @@ tr.detail td{background:#0b1229;white-space:normal;padding:14px}
 table.mini{width:100%;border-collapse:collapse;font-size:13px}
 table.mini th,table.mini td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right}
 table.mini th{color:var(--muted);font-weight:700}
-.attDel{padding:2px 6px;border-radius:8px;opacity:.75}
-.attDel:hover{opacity:1;background:rgba(244,63,94,.18)}
+.attDel{padding:3px 9px;border-radius:8px;border:1px solid rgba(244,63,94,.55);color:#fda4af;font-size:12px;font-weight:700;white-space:nowrap}
+.attDel:hover{background:rgba(244,63,94,.2);color:#fff}
 .ml{margin:6px 18px 0 0;font-size:13px;color:var(--ink2)}
 .missList{display:grid;gap:8px}
 .mi{display:grid;grid-template-columns:1fr minmax(80px,28%) 36px;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-size:14px}
