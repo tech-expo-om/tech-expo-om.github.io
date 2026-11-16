@@ -446,6 +446,7 @@ table.mini th,table.mini td{padding:5px 6px;border-bottom:1px solid var(--line);
 table.mini th{color:var(--muted);font-weight:700}
 .attDel{padding:3px 9px;border-radius:8px;border:1px solid rgba(244,63,94,.55);color:#fda4af;font-size:12px;font-weight:700;white-space:nowrap}
 .attDel:hover{background:rgba(244,63,94,.2);color:#fff}
+.rowDel{float:left;margin:1px 8px 1px 0}
 tr.detail .hAct{min-width:0;overflow-x:auto}
 @media(max-width:480px){table.mini{font-size:12px} table.mini th,table.mini td{padding:4px 2px} .attDel{padding:3px 5px;font-size:11px}}
 .ml{margin:6px 18px 0 0;font-size:13px;color:var(--ink2)}

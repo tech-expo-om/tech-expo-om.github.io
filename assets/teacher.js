@@ -147,7 +147,7 @@ function dashboard(){
       <thead><tr>${th('name','الطالبة')}${th('cls','الصف')}${th('done','الإنجاز')}${th('overall','متوسط النتائج')}
         ${M.acts.map(a=>th('act:'+a.id, esc(a.title))).join('')}${th('cert','📜 الشهادة')}${th('attempts','المحاولات')}${th('last','آخر نشاط')}</tr></thead>
       <tbody>${M.list.map((s,i)=>`<tr class="srow" data-i="${i}">
-        <td><b>${esc(s.name)}</b></td><td>${esc(s.cls)}</td><td>${s.done} / ${M.nActs}</td>
+        <td>${CAN_DELETE?`<button class="attDel rowDel" data-i="${i}" title="حذف الطالبة نهائيًا" aria-label="حذف الطالبة نهائيًا">🗑️ حذف</button>`:''}<b>${esc(s.name)}</b></td><td>${esc(s.cls)}</td><td>${s.done} / ${M.nActs}</td>
         <td class="hc strong" style="--v:${s.overall}">${fp(s.overall)}${s.overall<60?' ⚠️':''}</td>
         ${M.acts.map(a=>cell(s.best[a.id])).join('')}<td class="${s.cert?'':'muted'}">${CERT[s.cert]}</td><td>${s.attempts}</td><td class="muted">${fmt(s.last)}</td></tr>
         ${OPEN===s.name+'|'+s.cls?`<tr class="detail"><td colspan="${7+M.acts.length}"><div class="detIn">${detail(s, M.acts, i)}</div></td></tr>`:''}`).join('')}</tbody>
@@ -169,7 +169,8 @@ function dashboard(){
   $('#pdf').onclick = () => classReport(M);
   $$('.stuPdf').forEach(b => b.onclick = () => studentReport(M.list[+b.dataset.i], M));
   $$('.stuDel').forEach(b => b.onclick = () => erase(M.list[+b.dataset.i]));
-  $$('.attDel').forEach(b => b.onclick = () => erase(M.list[+b.dataset.i], b.dataset.act, +b.dataset.t));
+  $$('.attDel:not(.rowDel)').forEach(b => b.onclick = () => erase(M.list[+b.dataset.i], b.dataset.act, +b.dataset.t));
+  $$('.rowDel').forEach(b => b.onclick = e => { e.stopPropagation(); erase(M.list[+b.dataset.i]); }); // لا يفتح صف الطالبة
 }
 const CERT = ['—', '📜 حصلت عليها', '👁️ فتحتها', '🖨️ طبعتها'];
 function detail(s, acts, i){
