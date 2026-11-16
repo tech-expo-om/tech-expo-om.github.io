@@ -147,7 +147,7 @@ function dashboard(){
       <thead><tr>${th('name','الطالبة')}${th('cls','الصف')}${th('done','الإنجاز')}${th('overall','متوسط النتائج')}
         ${M.acts.map(a=>th('act:'+a.id, esc(a.title))).join('')}${th('cert','📜 الشهادة')}${th('attempts','المحاولات')}${th('last','آخر نشاط')}</tr></thead>
       <tbody>${M.list.map((s,i)=>`<tr class="srow" data-i="${i}">
-        <td>${CAN_DELETE?`<button class="attDel rowDel" data-i="${i}" title="حذف كل سجلات الطالبة" aria-label="حذف كل سجلات الطالبة">🗑️ حذف</button>`:''}<b>${esc(s.name)}</b></td><td>${esc(s.cls)}</td><td>${s.done} / ${M.nActs}</td>
+        <td>${CAN_DELETE?`<button class="attDel rowDel" data-i="${i}" title="حذف سجلات الطالبة في هذا الدرس" aria-label="حذف سجلات الطالبة في هذا الدرس">🗑️ حذف</button>`:''}<b>${esc(s.name)}</b></td><td>${esc(s.cls)}</td><td>${s.done} / ${M.nActs}</td>
         <td class="hc strong" style="--v:${s.overall}">${fp(s.overall)}${s.overall<60?' ⚠️':''}</td>
         ${M.acts.map(a=>cell(s.best[a.id])).join('')}<td class="${s.cert?'':'muted'}">${CERT[s.cert]}</td><td>${s.attempts}</td><td class="muted">${fmt(s.last)}</td></tr>
         ${OPEN===s.name+'|'+s.cls?`<tr class="detail"><td colspan="${7+M.acts.length}"><div class="detIn">${detail(s, M.acts, i)}</div></td></tr>`:''}`).join('')}</tbody>
@@ -182,7 +182,7 @@ function detail(s, acts, i){
     : `<div class="empty">لم تصل نتيجة التقويم الختامي بعد — تُبنى الشهادة من الأنشطة التي أنجزتها.</div>
       <button class="btn gold sm certView" data-i="${i}">إنشاء الشهادة 📜</button>`}</div>`;
   const tools = `<div class="row" style="margin-bottom:12px"><button class="btn ghost sm stuPdf" data-i="${i}">📄 تقرير الطالبة PDF</button>
-    ${CAN_DELETE ? `<button class="btn ghost sm stuDel" data-i="${i}">🗑️ حذف كل سجلات الطالبة</button>` : `<span class="muted" style="font-size:12.5px">لتفعيل حذف الطالبات حدّثي الكود في جدول Google من «⚙️ الإعداد».</span>`}</div>`;
+    ${CAN_DELETE ? `<button class="btn ghost sm stuDel" data-i="${i}">🗑️ حذف سجلات الطالبة في هذا الدرس</button>` : `<span class="muted" style="font-size:12.5px">لتفعيل حذف الطالبات حدّثي الكود في جدول Google من «⚙️ الإعداد».</span>`}</div>`;
   return `${tools}<div class="hActs">${cert}${acts.map(a=>{ const h=s.hist.filter(r=>r.act===a.id).sort((x,y)=>x.t-y.t);
     if(!h.length) return `<div class="hAct" style="--c:#475569"><h4>${esc(a.title)}</h4><div class="empty">لم تحاول بعد</div></div>`;
     return `<div class="hAct" style="--c:#14b8a6"><div class="hh"><h4>${esc(a.title)}</h4><span class="status done">أفضل: ${fp(Math.max(...h.map(r=>r.pct)))}</span></div>
@@ -221,10 +221,10 @@ function exportCSV(rows){
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `نتائج-${F.lesson}${F.cls?'-'+F.cls.replace('/','_'):''}.csv`; a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
-/* ---------- حذف طالبة (أو محاولة واحدة لها) نهائيًا من جدول النتائج ---------- */
-function erase(s, act, t){ // بدون act: كل سجلات الطالبة
-  const key = s.name+'|'+s.cls, hit = r => skey(r)===key && (act==null || (r.act===act && r.t===t)), mine = ROWS.filter(hit), pin = sessionStorage.getItem(PINKEY);
-  if(!confirm(act!=null ? `حذف هذه المحاولة للطالبة «${s.name}» (${mine[0].actTitle} — ${fmt(t)}) نهائيًا؟\nلا يمكن التراجع.` : `حذف سجلات الطالبة «${s.name}» (${s.cls})؟\nستُحذف كل سجلاتها (${mine.length}) من جدول النتائج في جميع الدروس، ولا يمكن التراجع.\nلا يُحذف شيء غير سجلاتها، وتعود للظهور في اللوحة إذا أدّت نشاطًا جديدًا.`)) return;
+/* ---------- حذف سجلات طالبة في الدرس المحدد (أو محاولة واحدة لها) نهائيًا من جدول النتائج ---------- */
+function erase(s, act, t){ // بدون act: كل سجلات الطالبة في الدرس المحدد
+  const key = s.name+'|'+s.cls, hit = r => skey(r)===key && r.lesson===F.lesson && (act==null || (r.act===act && r.t===t)), mine = ROWS.filter(hit), pin = sessionStorage.getItem(PINKEY);
+  if(!confirm(act!=null ? `حذف هذه المحاولة للطالبة «${s.name}» (${mine[0].actTitle} — ${fmt(t)}) نهائيًا؟\nلا يمكن التراجع.` : `حذف سجلات الطالبة «${s.name}» (${s.cls}) في درس «${lessonTitle()}»؟\nستُحذف سجلاتها في هذا الدرس فقط (${mine.length}) من جدول النتائج، ولا يمكن التراجع.\nتبقى نتائجها في الدروس الأخرى كما هي.`)) return;
   render(`<section class="panel center"><p class="lead">⏳ جارٍ الحذف…</p></section>`);
   fetch(P.sheetUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({action:'deleteStudent', pin, name:s.name, act, times:[...new Set(mine.map(r=>r.t))]})})
