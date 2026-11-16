@@ -75,7 +75,7 @@ function load(pin){
     .then(r => r.json()).then(d => {
       if(!d.ok){ sessionStorage.removeItem(PINKEY); login(); $('#err').textContent='الرمز السري غير صحيح'; return; }
       sessionStorage.setItem(PINKEY, pin); CAN_DELETE = !!d.canDelete; const seen = new Set(); ROWS = d.rows.map(cleanRow).filter(r => { const k=r.device+'|'+r.t+'|'+r.act; if(!r.name || seen.has(k)) return false; seen.add(k); return true; }); dashboard();
-      if(DELCHECK){ const k = DELCHECK; DELCHECK = null; if(ROWS.some(r => skey(r)===k)) alert('تعذّر حذف الطالبة. تأكّدي من تحديث الكود في جدول Google ومن الرمز السري، ثم أعيدي المحاولة.'); }
+      if(DELCHECK){ const gone = DELCHECK; DELCHECK = null; if(ROWS.some(gone)) alert('تعذّر الحذف. تأكّدي من تحديث الكود في جدول Google ومن الرمز السري، ثم أعيدي المحاولة.'); }
     }).catch(() => { render(`<section class="panel center"><p class="lead">تعذّر الاتصال بجدول النتائج. تأكّدي من الإنترنت ومن رابط Web app.</p><button class="btn" id="re">إعادة المحاولة</button></section>`); $('#re').onclick=()=>load(pin); });
 }
 
@@ -168,7 +168,8 @@ function dashboard(){
   $$('.certView').forEach(b => b.onclick = () => certScreen(M.list[+b.dataset.i], M));
   $('#pdf').onclick = () => classReport(M);
   $$('.stuPdf').forEach(b => b.onclick = () => studentReport(M.list[+b.dataset.i], M));
-  $$('.stuDel').forEach(b => b.onclick = () => removeStudent(M.list[+b.dataset.i]));
+  $$('.stuDel').forEach(b => b.onclick = () => erase(M.list[+b.dataset.i]));
+  $$('.attDel').forEach(b => b.onclick = () => erase(M.list[+b.dataset.i], b.dataset.act, +b.dataset.t));
 }
 const CERT = ['—', '📜 حصلت عليها', '👁️ فتحتها', '🖨️ طبعتها'];
 function detail(s, acts, i){
@@ -184,8 +185,8 @@ function detail(s, acts, i){
   return `${tools}<div class="hActs">${cert}${acts.map(a=>{ const h=s.hist.filter(r=>r.act===a.id).sort((x,y)=>x.t-y.t);
     if(!h.length) return `<div class="hAct" style="--c:#475569"><h4>${esc(a.title)}</h4><div class="empty">لم تحاول بعد</div></div>`;
     return `<div class="hAct" style="--c:#14b8a6"><div class="hh"><h4>${esc(a.title)}</h4><span class="status done">أفضل: ${fp(Math.max(...h.map(r=>r.pct)))}</span></div>
-      <table class="mini"><thead><tr><th>#</th><th>التاريخ</th><th>النتيجة</th><th>الأخطاء</th></tr></thead><tbody>
-      ${h.map((r,i)=>`<tr><td>${i+1}</td><td>${fmt(r.t)}</td><td>${r.score}/${r.max} (${fp(r.pct)})</td><td>${r.mistakes}</td></tr>`).join('')}</tbody></table>
+      <table class="mini"><thead><tr><th>#</th><th>التاريخ</th><th>النتيجة</th><th>الأخطاء</th>${CAN_DELETE?'<th></th>':''}</tr></thead><tbody>
+      ${h.map((r,j)=>`<tr><td>${j+1}</td><td>${fmt(r.t)}</td><td>${r.score}/${r.max} (${fp(r.pct)})</td><td>${r.mistakes}</td>${CAN_DELETE?`<td><button class="attDel" data-i="${i}" data-act="${esc(r.act)}" data-t="${r.t}" title="حذف هذه المحاولة نهائيًا" aria-label="حذف هذه المحاولة نهائيًا">🗑️</button></td>`:''}</tr>`).join('')}</tbody></table>
       ${h.some(r=>r.misses.length)?`<details class="tbl"><summary>الأسئلة التي أخطأت فيها</summary><ul class="ml">${[...new Set(h.flatMap(r=>r.misses))].map(q=>`<li>${esc(q)}</li>`).join('')}</ul></details>`:''}
     </div>`; }).join('')}</div>`;
 }
@@ -219,14 +220,14 @@ function exportCSV(rows){
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `نتائج-${F.lesson}${F.cls?'-'+F.cls.replace('/','_'):''}.csv`; a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
-/* ---------- حذف طالبة نهائيًا من جدول النتائج ---------- */
-function removeStudent(s){
-  const key = s.name+'|'+s.cls, mine = ROWS.filter(r => skey(r)===key), pin = sessionStorage.getItem(PINKEY);
-  if(!confirm(`حذف الطالبة «${s.name}» (${s.cls}) نهائيًا؟\nستُحذف كل سجلاتها (${mine.length}) من جدول النتائج في جميع الدروس، ولا يمكن التراجع.`)) return;
+/* ---------- حذف طالبة (أو محاولة واحدة لها) نهائيًا من جدول النتائج ---------- */
+function erase(s, act, t){ // بدون act: كل سجلات الطالبة
+  const key = s.name+'|'+s.cls, hit = r => skey(r)===key && (act==null || (r.act===act && r.t===t)), mine = ROWS.filter(hit), pin = sessionStorage.getItem(PINKEY);
+  if(!confirm(act!=null ? `حذف هذه المحاولة للطالبة «${s.name}» (${mine[0].actTitle} — ${fmt(t)}) نهائيًا؟\nلا يمكن التراجع.` : `حذف الطالبة «${s.name}» (${s.cls}) نهائيًا؟\nستُحذف كل سجلاتها (${mine.length}) من جدول النتائج في جميع الدروس، ولا يمكن التراجع.`)) return;
   render(`<section class="panel center"><p class="lead">⏳ جارٍ الحذف…</p></section>`);
   fetch(P.sheetUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({action:'deleteStudent', pin, name:s.name, times:[...new Set(mine.map(r=>r.t))]})})
-    .then(() => { DELCHECK = key; OPEN = null; load(pin); }, () => { dashboard(); alert('تعذّر الاتصال بجدول النتائج. لم يُحذف شيء.'); });
+    body:JSON.stringify({action:'deleteStudent', pin, name:s.name, act, times:[...new Set(mine.map(r=>r.t))]})})
+    .then(() => { DELCHECK = hit; if(act==null) OPEN = null; load(pin); }, () => { dashboard(); alert('تعذّر الاتصال بجدول النتائج. لم يُحذف شيء.'); });
 }
 
 /* ---------- تقارير PDF (تُفتح كصفحة جاهزة للطباعة / الحفظ PDF) ---------- */

@@ -63,10 +63,10 @@ function doGet(e) {
   return json_({ ok: true, rows: rows, canDelete: true });
 }
 
-// تحذف نهائيًا كل صفوف طالبة واحدة (بطلب من لوحة المعلمة) — تتطلب الرمز السري
+// تحذف نهائيًا صفوف طالبة واحدة — كلها، أو محاولة واحدة عند تحديد النشاط (بطلب من لوحة المعلمة) — تتطلب الرمز السري
 function deleteStudent_(d) {
   if (TEACHER_PIN === 'غيّريني-1234' || String(d.pin || '') !== TEACHER_PIN) return json_({ ok: false, error: 'pin' });
-  const name = String(d.name || '').trim(), times = {};
+  const name = String(d.name || '').trim(), act = d.act == null ? null : String(d.act), times = {};
   (Array.isArray(d.times) ? d.times : []).forEach(t => { times[Number(t)] = true; });
   if (!name) return json_({ ok: false, error: 'name' });
   const lock = LockService.getScriptLock();
@@ -75,7 +75,7 @@ function deleteStudent_(d) {
   try {
     const sh = sheet_(), values = sh.getDataRange().getValues();
     for (let i = values.length - 1; i >= 1; i--) { // من الأسفل حتى لا تتغيّر أرقام الصفوف
-      if (String(values[i][1]).trim() === name && times[new Date(values[i][0]).getTime() || 0]) { sh.deleteRow(i + 1); deleted++; }
+      if (String(values[i][1]).trim() === name && times[new Date(values[i][0]).getTime() || 0] && (act === null || String(values[i][6]) === act)) { sh.deleteRow(i + 1); deleted++; }
     }
   } finally {
     lock.releaseLock();
