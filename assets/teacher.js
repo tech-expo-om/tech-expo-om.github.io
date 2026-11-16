@@ -117,7 +117,7 @@ function dashboard(){
   const lessons = [...new Map(ROWS.map(r=>[r.lesson, r.lessonTitle])).entries()];
   P.lessons.forEach(l => { if(!lessons.find(x=>x[0]===l.id)) lessons.push([l.id, l.title]); });
   if(!F.lesson) F.lesson = (lessons[0]||[''])[0];
-  const classes = [...new Set(ROWS.filter(r=>r.lesson===F.lesson).map(r=>String(r.cls).trim()))].sort();
+  const classes = [...new Set(ROWS.filter(r=>r.lesson===F.lesson).map(r=>String(r.cls).trim()))].filter(Boolean).sort(); // صف فارغ كان يُظهر خانة «الصف» فارغة
   const M = model();
   const k = SORT.k, dir = SORT.dir;
   M.list.sort((a,b) => { const va = k.startsWith('act:') ? (a.best[k.slice(4)]??-1) : a[k], vb = k.startsWith('act:') ? (b.best[k.slice(4)]??-1) : b[k];
